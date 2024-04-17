@@ -32,26 +32,25 @@ INFRARED_SENSORS_NAMES = [
 ]
 
 
-def enable_distance_sensors(robot, timeStep, sensorNames):
+def enable_distance_sensors(robot, time_step, sensor_names):
     """
     Obtener y activar los sensores de distancia.
 
-    Return: lista con los sensores de distancia activados, en el mismo orden
-    establecido en la lista de  nombres (sensorNames).
+    Return: diccionario con los sensores de distancia activados, en el mismo orden
+    establecido en la lista de nombres (sensorNames).
     """
+    sensor_dict = {}
 
-    sensorList = []
+    for name in sensor_names:
+        sensor_dict[name] = robot.getDevice(name)
+        sensor_dict[name].enable(time_step)
 
-    for name in sensorNames:
-        sensorList.append(robot.getDevice(name))
+    print("Sensores de distancia activados:", sensor_dict)
 
-    for sensor in sensorList:
-        sensor.enable(timeStep)
-
-    return sensorList
+    return sensor_dict
 
 
-def init_devices(timeStep):
+def init_devices(time_step):
     """
     Obtener y configurar los dispositivos necesarios.
 
@@ -66,38 +65,35 @@ def init_devices(timeStep):
     # simTimeStep = int(robot.getBasicTimeStep())
 
     # Obtener dispositivos correspondientes a los motores de las ruedas.
-    leftWheel = robot.getDevice("left wheel motor")
-    rightWheel = robot.getDevice("right wheel motor")
+    left_wheel = robot.getDevice("left wheel motor")
+    right_wheel = robot.getDevice("right wheel motor")
 
     # Configuración inicial para utilizar movimiento por posición (necesario para odometría).
     # En movimiento por velocidad, establecer posición a infinito (wheel.setPosition(float('inf'))).
-    leftWheel.setPosition(float("inf"))
-    rightWheel.setPosition(float("inf"))
-    leftWheel.setVelocity(0)
-    rightWheel.setVelocity(0)
+    left_wheel.setPosition(float("inf"))
+    right_wheel.setPosition(float("inf"))
+    left_wheel.setVelocity(0)
+    right_wheel.setVelocity(0)
 
     # Obtener una lista con los sensores infrarrojos ya activados
-    irSensorList = enable_distance_sensors(robot, timeStep, INFRARED_SENSORS_NAMES)
+    ir_sensor_list = enable_distance_sensors(robot, time_step, INFRARED_SENSORS_NAMES)
 
     # Obtener el dispositivo de la cámara
     camera = robot.getDevice("camera")
     # Activar el dispositivo de la cámara (el tiempo de actualización de los frames
     # de la cámara no debería ser muy alto debido al alto volumen de datos que implica).
-    camera.enable(timeStep * 10)
+    camera.enable(time_step * 10)
 
     # Obtener y activar los sensores de posición de las ruedas (encoders).
-    posL = robot.getDevice("left wheel sensor")
-    posR = robot.getDevice("right wheel sensor")
-    posL.enable(timeStep)
-    posR.enable(timeStep)
+    pos_l = robot.getDevice("left wheel sensor")
+    pos_r = robot.getDevice("right wheel sensor")
+    pos_l.enable(time_step)
+    pos_r.enable(time_step)
 
-    # TODO: Obtener y activar otros dispositivos necesarios.
-    # ...
-
-    return robot, leftWheel, rightWheel, irSensorList, posL, posR, camera
+    return robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera
 
 
-def move_forward(robot, leftWheel, rightWheel, distance, speed=CRUISE_SPEED):
+def move_forward(robot, left_wheel, right_wheel, distance, speed=CRUISE_SPEED):
     """
     Mover el robot hacia adelante una distancia específica usando control supervisado.
 
@@ -111,9 +107,8 @@ def move_forward(robot, leftWheel, rightWheel, distance, speed=CRUISE_SPEED):
     initial_position = khepera_node.getPosition()
 
     # Activar los motores para mover el robot hacia adelante
-    leftWheel.setVelocity(speed)
-    rightWheel.setVelocity(speed)
-    print("Distance: " + str(distance))
+    left_wheel.setVelocity(speed)
+    right_wheel.setVelocity(speed)
 
     # Bucle principal para mover el robot hacia la posición objetivo
     while robot.step(TIME_STEP) != -1:
@@ -128,87 +123,79 @@ def move_forward(robot, leftWheel, rightWheel, distance, speed=CRUISE_SPEED):
         if current_position[2] <= initial_position[2] - distance: # Up
             break
     # Detener los motores
-    leftWheel.setVelocity(0)
-    rightWheel.setVelocity(0)
+    left_wheel.setVelocity(0)
+    right_wheel.setVelocity(0)
     print("Movimiento completado hacia adelante por", distance, "metros.")
 
 
-def turn_left(robot, leftWheel, rightWheel, degrees, speed=CRUISE_SPEED):
+def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
     """
-    Gira el robot una cantidad específica de grados a una velocidad dada.
-    
-    robot: instancia del robot Supervisor.
-    leftWheel, rightWheel: motores de las ruedas izquierda y derecha.
-    degrees: cantidad de grados para girar. Positivo para girar a la izquierda, negativo para la derecha.
+    Hace que el robot gire n grados a la izquierda.
+
+    robot: instancia del robot.
+    leftWheel, rightWheel: dispositivos de los motores de las ruedas.
     speed: velocidad de las ruedas durante el giro.
+    direction: dirección del giro (izquierda o derecha).
     """
-    # Convertir grados a radianes
-    target_rotation_radians = degrees * (pi / 180)
+    orientations = {
+    "N": [[0, -1], [-1, 0]],
+    "E": [[1, 0], [0, -1]],
+    "S": [[0, 1], [1, 0]],
+    "W": [[-1, 0], [0, 1]],
+    }
 
-    # Iniciar el giro
-    if degrees > 0:  # Girar a la izquierda
-        leftWheel.setVelocity(-speed)
-        rightWheel.setVelocity(speed)
-    else:  # Girar a la derecha
-        leftWheel.setVelocity(speed)
-        rightWheel.setVelocity(-speed)
+    # Obtener la rotación inicial del robot
+    khepera_node = robot.getFromDef("Khepera")
+    initial_orientation = khepera_node.getOrientation()
+    initial_orientation = [
+        [round(initial_orientation[0]), round(initial_orientation[1])],
+        [round(initial_orientation[6]), round(initial_orientation[7])]
+    ]
 
-    # Obtener el nodo del robot y su rotación inicial
-    khepera_node = robot.getFromDef('Khepera')
-    initial_rotation = khepera_node.getOrientation()
-    initial_angle = atan2(initial_rotation[6], initial_rotation[0])  # atan2(rot_z, rot_x)
+    # Calcular la rotación objetivo
+    if initial_orientation == orientations["N"]:
+        target_orientation = orientations["W"] if direction == "left" else orientations["E"]
+    elif initial_orientation == orientations["E"]:
+        target_orientation = orientations["N"] if direction == "left" else orientations["S"]
+    elif initial_orientation == orientations["S"]:
+        target_orientation = orientations["E"] if direction == "left" else orientations["W"]
+    else:
+        target_orientation = orientations["S"] if direction == "left" else orientations["N"]
 
-    # Ángulo objetivo en radianes
-    target_angle = initial_angle + target_rotation_radians
+    # Configurar las velocidades de las ruedas para el giro:
+    # la izquierda hacia atrás, la derecha hacia adelante
+    if direction == "left":
+        left_wheel.setVelocity(-speed)
+        right_wheel.setVelocity(speed)
+    else:
+        left_wheel.setVelocity(speed)
+        right_wheel.setVelocity(-speed)
 
-    # Normalizar el ángulo objetivo para mantenerlo entre -pi y pi
-    if target_angle > pi:
-        target_angle -= 2 * pi
-    elif target_angle < -pi:
-        target_angle += 2 * pi
-
-    # Bucle de giro
+    # Bucle principal para realizar el giro
     while robot.step(TIME_STEP) != -1:
-        current_rotation = khepera_node.getOrientation()
-        current_angle = atan2(current_rotation[6], current_rotation[0])
-
-        # Normalizar el ángulo actual
-        if current_angle > pi:
-            current_angle -= 2 * pi
-        elif current_angle < -pi:
-            current_angle += 2 * pi
-
-        # Diferencia de ángulo
-        angle_diff = current_angle - target_angle
-
-        # Normalizar la diferencia de ángulo
-        if angle_diff > pi:
-            angle_diff -= 2 * pi
-        elif angle_diff < -pi:
-            angle_diff += 2 * pi
-
-        # Comprobar si el giro se completó dentro de un umbral
-        if fabs(angle_diff) < 0.03:  # 0.05 radianes de margen de error
+        current_orientation = khepera_node.getOrientation()
+        current_orientation = [
+            [round(current_orientation[0], 2), round(current_orientation[1], 2)],
+            [round(current_orientation[6], 2), round(current_orientation[7], 2)]
+        ]
+        print ("Current orientation: ", current_orientation)
+        if current_orientation == target_orientation:
             break
 
     # Detener las ruedas
-    leftWheel.setVelocity(0)
-    rightWheel.setVelocity(0)
-    print(f"Giro completado de {degrees} grados.")
+    left_wheel.setVelocity(0)
+    right_wheel.setVelocity(0)
+    print("Giro completado a la ", direction)
 
 
 def main():
+    """
+    Función principal para controlar el robot.
+    """
     # Activamos los dispositivos necesarios y obtenemos referencias a ellos.
-    robot, leftWheel, rightWheel, irSensorList, posL, posR, camera = init_devices(
+    robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera = init_devices(
         TIME_STEP
     )
-
-    # TODO Implementar arquitectura de control del robot.
-    # ...
-
-    move_forward(robot, leftWheel, rightWheel, 0.25)
-    turn_left(robot, leftWheel, rightWheel, 90)
-    move_forward(robot, leftWheel, rightWheel, 0.25)
 
 
 if __name__ == "__main__":
