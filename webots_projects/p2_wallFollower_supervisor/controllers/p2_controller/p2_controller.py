@@ -8,7 +8,7 @@ Author: Anabel Díaz Labrador
 Control del robot Khepera IV en Webots usando Supervisor.
 """
 
-from math import radians, pi, fabs
+from math import fabs, pi, atan2
 from controller import Supervisor
 
 
@@ -110,13 +110,6 @@ def move_forward(robot, leftWheel, rightWheel, distance, speed=CRUISE_SPEED):
     khepera_node = robot.getFromDef("Khepera")
     initial_position = khepera_node.getPosition()
 
-    # Calcular la posición objetivo avanzando 'distance' metros en el eje Z y X
-    target_position = [
-        initial_position[0] + distance,
-        initial_position[1],
-        initial_position[2] + distance,
-    ]
-
     # Activar los motores para mover el robot hacia adelante
     leftWheel.setVelocity(speed)
     rightWheel.setVelocity(speed)
@@ -126,9 +119,13 @@ def move_forward(robot, leftWheel, rightWheel, distance, speed=CRUISE_SPEED):
     while robot.step(TIME_STEP) != -1:
         current_position = khepera_node.getPosition()
         print("Current position: " + str(current_position))
-        if current_position[2] >= target_position[2]:
+        if current_position[2] >= initial_position[2] + distance: # Down
             break
-        if current_position[0] >= target_position[0]:
+        if current_position[0] >= initial_position[0] + distance: # Right
+            break
+        if current_position[0] <= initial_position[0] - distance: # Left
+            break
+        if current_position[2] <= initial_position[2] - distance: # Up
             break
     # Detener los motores
     leftWheel.setVelocity(0)
@@ -138,51 +135,66 @@ def move_forward(robot, leftWheel, rightWheel, distance, speed=CRUISE_SPEED):
 
 def turn_left(robot, leftWheel, rightWheel, degrees, speed=CRUISE_SPEED):
     """
-    Hace que el robot gire n grados a la izquierda.
+    Gira el robot una cantidad específica de grados a una velocidad dada.
     
-    robot: instancia del robot.
-    leftWheel, rightWheel: dispositivos de los motores de las ruedas.
-    degrees: número de grados que el robot debe girar hacia la izquierda.
+    robot: instancia del robot Supervisor.
+    leftWheel, rightWheel: motores de las ruedas izquierda y derecha.
+    degrees: cantidad de grados para girar. Positivo para girar a la izquierda, negativo para la derecha.
     speed: velocidad de las ruedas durante el giro.
     """
-    # Obtener la rotación inicial del robot
-    khepera_node = robot.getFromDef("Khepera")
-    initial_orientation = khepera_node.getOrientation()
-    
-    # Calcular el ángulo objetivo en radianes
-    target_angle = initial_orientation[3] - radians(degrees)  # Girar a la izquierda reduce el ángulo
+    # Convertir grados a radianes
+    target_rotation_radians = degrees * (pi / 180)
 
-    # Normalizar el ángulo objetivo para mantenerlo entre -pi y pi para facilitar las comparaciones
-    if target_angle < -pi:
-        target_angle += 2 * pi
-    elif target_angle > pi:
+    # Iniciar el giro
+    if degrees > 0:  # Girar a la izquierda
+        leftWheel.setVelocity(-speed)
+        rightWheel.setVelocity(speed)
+    else:  # Girar a la derecha
+        leftWheel.setVelocity(speed)
+        rightWheel.setVelocity(-speed)
+
+    # Obtener el nodo del robot y su rotación inicial
+    khepera_node = robot.getFromDef('Khepera')
+    initial_rotation = khepera_node.getOrientation()
+    initial_angle = atan2(initial_rotation[6], initial_rotation[0])  # atan2(rot_z, rot_x)
+
+    # Ángulo objetivo en radianes
+    target_angle = initial_angle + target_rotation_radians
+
+    # Normalizar el ángulo objetivo para mantenerlo entre -pi y pi
+    if target_angle > pi:
         target_angle -= 2 * pi
+    elif target_angle < -pi:
+        target_angle += 2 * pi
 
-    # Configurar las velocidades de las ruedas para el giro: la izquierda hacia atrás, la derecha hacia adelante
-    leftWheel.setVelocity(-speed)
-    rightWheel.setVelocity(speed)
-
-    # Bucle principal para realizar el giro
+    # Bucle de giro
     while robot.step(TIME_STEP) != -1:
-        current_orientation = khepera_node.getOrientation()
-        current_angle = current_orientation[3]
+        current_rotation = khepera_node.getOrientation()
+        current_angle = atan2(current_rotation[6], current_rotation[0])
 
         # Normalizar el ángulo actual
-        if current_angle < -pi:
-            current_angle += 2 * pi
-        elif current_angle > pi:
+        if current_angle > pi:
             current_angle -= 2 * pi
+        elif current_angle < -pi:
+            current_angle += 2 * pi
 
-        # Calcular la diferencia de ángulo absoluta para verificar la cercanía al ángulo objetivo
-        angle_difference = fabs(current_angle - target_angle)
+        # Diferencia de ángulo
+        angle_diff = current_angle - target_angle
 
-        if angle_difference < radians(1):  # Permitir un margen de error en radianes
-            break  # Detener el giro cuando se alcance el ángulo objetivo
+        # Normalizar la diferencia de ángulo
+        if angle_diff > pi:
+            angle_diff -= 2 * pi
+        elif angle_diff < -pi:
+            angle_diff += 2 * pi
 
-    # Detener los motores
+        # Comprobar si el giro se completó dentro de un umbral
+        if fabs(angle_diff) < 0.03:  # 0.05 radianes de margen de error
+            break
+
+    # Detener las ruedas
     leftWheel.setVelocity(0)
     rightWheel.setVelocity(0)
-    print("Giro completado a la izquierda por", degrees, "grados.")
+    print(f"Giro completado de {degrees} grados.")
 
 
 def main():
