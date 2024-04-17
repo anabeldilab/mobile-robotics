@@ -7,15 +7,13 @@ Author: Anabel Díaz Labrador
 
 Control del robot Khepera IV en Webots usando Supervisor.
 """
-
-from math import fabs, pi, atan2
 from controller import Supervisor
 
 
 # Máxima velocidad de las ruedas soportada por el robot (khepera4).
 MAX_SPEED = 47.6
 # Velocidad por defecto para este comportamiento.
-CRUISE_SPEED = 8
+CRUISE_SPEED = 4
 # Time step por defecto para el controlador.
 TIME_STEP = 32
 
@@ -44,8 +42,6 @@ def enable_distance_sensors(robot, time_step, sensor_names):
     for name in sensor_names:
         sensor_dict[name] = robot.getDevice(name)
         sensor_dict[name].enable(time_step)
-
-    print("Sensores de distancia activados:", sensor_dict)
 
     return sensor_dict
 
@@ -113,7 +109,6 @@ def move_forward(robot, left_wheel, right_wheel, distance, speed=CRUISE_SPEED):
     # Bucle principal para mover el robot hacia la posición objetivo
     while robot.step(TIME_STEP) != -1:
         current_position = khepera_node.getPosition()
-        print("Current position: " + str(current_position))
         if current_position[2] >= initial_position[2] + distance: # Down
             break
         if current_position[0] >= initial_position[0] + distance: # Right
@@ -179,6 +174,7 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
             [round(current_orientation[6], 2), round(current_orientation[7], 2)]
         ]
         print ("Current orientation: ", current_orientation)
+        print ("Target orientation: ", target_orientation)
         if current_orientation == target_orientation:
             break
 
@@ -186,6 +182,27 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
     left_wheel.setVelocity(0)
     right_wheel.setVelocity(0)
     print("Giro completado a la ", direction)
+
+
+def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPEED):
+    # Check ir sensors
+    while True:
+        robot.step(TIME_STEP)
+        front_ir = ir_sensor_list["front infrared sensor"].getValue()
+        left_ir = ir_sensor_list["left infrared sensor"].getValue()
+        print ("Front IR: ", front_ir, "Left IR: ", left_ir)
+
+        # If there is a wall in front of the robot
+        if front_ir >= 190:
+            # Turn right
+            turn(robot, left_wheel, right_wheel, 1, "right")
+        elif left_ir < 150:
+            # Turn left
+            turn(robot, left_wheel, right_wheel, 1, "left")
+            move_forward(robot, left_wheel, right_wheel, 0.25, speed)
+        else:
+            # Move forward
+            move_forward(robot, left_wheel, right_wheel, 0.25, speed)
 
 
 def main():
@@ -196,7 +213,15 @@ def main():
     robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera = init_devices(
         TIME_STEP
     )
+    
+    # wall follow
+    wall_follow(robot, left_wheel, right_wheel, ir_sensor_list)
 
+    # Mover el robot hacia adelante una distancia específica.
+    # move_forward(robot, left_wheel, right_wheel, 0.25, CRUISE_SPEED)
+
+    # Girar el robot 90 grados a la izquierda.
+    # turn(robot, left_wheel, right_wheel, CRUISE_SPEED, "left")
 
 if __name__ == "__main__":
     main()
