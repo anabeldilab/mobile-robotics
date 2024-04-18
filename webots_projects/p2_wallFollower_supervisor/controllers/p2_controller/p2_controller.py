@@ -122,6 +122,20 @@ def move_forward(robot, left_wheel, right_wheel, distance, speed=CRUISE_SPEED):
     right_wheel.setVelocity(0)
     print("Movimiento completado hacia adelante por", distance, "metros.")
 
+def turn_tolerance(current, target, tolerance):
+    """
+    Check if the current orientation matrix is within the specified tolerance of the target orientation matrix.
+    
+    :param current: 2x2 list (matrix) representing the current orientation.
+    :param target: 2x2 list (matrix) representing the target orientation.
+    :param tolerance: float, the tolerance for each element in the orientation matrices.
+    :return: bool, True if within tolerance, False otherwise.
+    """
+    return all(
+        abs(current[i][j] - target[i][j]) <= tolerance
+        for i in range(2) for j in range(2)
+    )
+
 
 def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
     """
@@ -166,16 +180,15 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
         left_wheel.setVelocity(speed)
         right_wheel.setVelocity(-speed)
 
-    # Bucle principal para realizar el giro
     while robot.step(TIME_STEP) != -1:
         current_orientation = khepera_node.getOrientation()
         current_orientation = [
             [round(current_orientation[0], 2), round(current_orientation[1], 2)],
             [round(current_orientation[6], 2), round(current_orientation[7], 2)]
         ]
-        print ("Current orientation: ", current_orientation)
-        print ("Target orientation: ", target_orientation)
-        if current_orientation == target_orientation:
+        print("Current orientation: ", current_orientation)
+        print("Target orientation: ", target_orientation)
+        if turn_tolerance(current_orientation, target_orientation, 0.01):
             break
 
     # Detener las ruedas
@@ -185,6 +198,9 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
 
 
 def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPEED):
+    desired_distance = 150  # Desired distance from the wall in sensor units
+    proportional_gain = 0.05  # Gain for the proportional control
+    
     # Check ir sensors
     while True:
         robot.step(TIME_STEP)
@@ -192,16 +208,30 @@ def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPE
         left_ir = ir_sensor_list["left infrared sensor"].getValue()
         print ("Front IR: ", front_ir, "Left IR: ", left_ir)
 
+        # Calculate error between the current left sensor reading and the desired distance
+        distance_error = left_ir - desired_distance
+
         # If there is a wall in front of the robot
         if front_ir >= 190:
             # Turn right
-            turn(robot, left_wheel, right_wheel, 1, "right")
+            turn(robot, left_wheel, right_wheel, 2, "right")
         elif left_ir < 150:
             # Turn left
-            turn(robot, left_wheel, right_wheel, 1, "left")
+            turn(robot, left_wheel, right_wheel, 2, "left")
             move_forward(robot, left_wheel, right_wheel, 0.25, speed)
         else:
-            # Move forward
+            # Adjust the speed of the wheels based on the distance error
+            left_wheel_speed = speed + proportional_gain * distance_error
+            right_wheel_speed = speed - proportional_gain * distance_error
+
+            # Ensure that wheel speeds do not exceed the maximum speed
+            left_wheel_speed = max(min(left_wheel_speed, MAX_SPEED), -MAX_SPEED)
+            right_wheel_speed = max(min(right_wheel_speed, MAX_SPEED), -MAX_SPEED)
+
+            left_wheel.setVelocity(left_wheel_speed)
+            right_wheel.setVelocity(right_wheel_speed)
+
+            # Move forward a bit after adjusting the direction
             move_forward(robot, left_wheel, right_wheel, 0.25, speed)
 
 
