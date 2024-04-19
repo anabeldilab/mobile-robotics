@@ -72,10 +72,13 @@ Wall {
   name "wall(6)"
   size 0.5 0.1 0.5
 }
-Khepera4 {
-  translation -1.11024 -7.94711e-05 -1.14305
-  rotation -0.5773490918272008 -0.5773506256603425 -0.5773510900794399 2.0943961664596453
-  controller "<none>"
+DEF Khepera Khepera4 {
+  hidden translation_1 0 0.0527 0.021
+  hidden translation_2 0 -0.0527 0.021
+  translation -1.1102399999999997 -8.026269070814801e-05 -1.1430499999999997
+  rotation 0.5773492479633383 0.577350779590428 0.5773507800137563 -2.09439663486698
+  controller "p2_controller"
+  supervisor TRUE
 }
 Wall {
   translation -0.24602 0.0499994 0.604002

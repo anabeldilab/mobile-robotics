@@ -7,6 +7,7 @@ Author: Anabel Díaz Labrador
 
 Control del robot Khepera IV en Webots usando Supervisor.
 """
+
 from controller import Supervisor
 
 
@@ -89,7 +90,7 @@ def init_devices(time_step):
     return robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera
 
 
-def move_forward(robot, left_wheel, right_wheel, distance, speed=CRUISE_SPEED):
+def move_forward(robot, left_wheel, right_wheel, distance, front_ir, speed=CRUISE_SPEED):
     """
     Mover el robot hacia adelante una distancia específica usando control supervisado.
 
@@ -109,23 +110,28 @@ def move_forward(robot, left_wheel, right_wheel, distance, speed=CRUISE_SPEED):
     # Bucle principal para mover el robot hacia la posición objetivo
     while robot.step(TIME_STEP) != -1:
         current_position = khepera_node.getPosition()
-        if current_position[2] >= initial_position[2] + distance: # Down
+
+        if front_ir.getValue() >= 250:
             break
-        if current_position[0] >= initial_position[0] + distance: # Right
+        if current_position[2] >= initial_position[2] + distance:  # Down
             break
-        if current_position[0] <= initial_position[0] - distance: # Left
+        if current_position[0] >= initial_position[0] + distance:  # Right
             break
-        if current_position[2] <= initial_position[2] - distance: # Up
+        if current_position[0] <= initial_position[0] - distance:  # Left
+            break
+        if current_position[2] <= initial_position[2] - distance:  # Up
             break
     # Detener los motores
     left_wheel.setVelocity(0)
     right_wheel.setVelocity(0)
     print("Movimiento completado hacia adelante por", distance, "metros.")
 
+
 def turn_tolerance(current, target, tolerance):
     """
-    Check if the current orientation matrix is within the specified tolerance of the target orientation matrix.
-    
+    Check if the current orientation matrix is within the specified tolerance of the target
+    orientation matrix.
+
     :param current: 2x2 list (matrix) representing the current orientation.
     :param target: 2x2 list (matrix) representing the target orientation.
     :param tolerance: float, the tolerance for each element in the orientation matrices.
@@ -133,7 +139,8 @@ def turn_tolerance(current, target, tolerance):
     """
     return all(
         abs(current[i][j] - target[i][j]) <= tolerance
-        for i in range(2) for j in range(2)
+        for i in range(2)
+        for j in range(2)
     )
 
 
@@ -147,10 +154,10 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
     direction: dirección del giro (izquierda o derecha).
     """
     orientations = {
-    "N": [[0, -1], [-1, 0]],
-    "E": [[1, 0], [0, -1]],
-    "S": [[0, 1], [1, 0]],
-    "W": [[-1, 0], [0, 1]],
+        "N": [[0, -1], [-1, 0]],
+        "E": [[1, 0], [0, -1]],
+        "S": [[0, 1], [1, 0]],
+        "W": [[-1, 0], [0, 1]],
     }
 
     # Obtener la rotación inicial del robot
@@ -158,18 +165,26 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
     initial_orientation = khepera_node.getOrientation()
     initial_orientation = [
         [round(initial_orientation[0]), round(initial_orientation[1])],
-        [round(initial_orientation[6]), round(initial_orientation[7])]
+        [round(initial_orientation[6]), round(initial_orientation[7])],
     ]
 
     # Calcular la rotación objetivo
     if initial_orientation == orientations["N"]:
-        target_orientation = orientations["W"] if direction == "left" else orientations["E"]
+        target_orientation = (
+            orientations["W"] if direction == "left" else orientations["E"]
+        )
     elif initial_orientation == orientations["E"]:
-        target_orientation = orientations["N"] if direction == "left" else orientations["S"]
+        target_orientation = (
+            orientations["N"] if direction == "left" else orientations["S"]
+        )
     elif initial_orientation == orientations["S"]:
-        target_orientation = orientations["E"] if direction == "left" else orientations["W"]
+        target_orientation = (
+            orientations["E"] if direction == "left" else orientations["W"]
+        )
     else:
-        target_orientation = orientations["S"] if direction == "left" else orientations["N"]
+        target_orientation = (
+            orientations["S"] if direction == "left" else orientations["N"]
+        )
 
     # Configurar las velocidades de las ruedas para el giro:
     # la izquierda hacia atrás, la derecha hacia adelante
@@ -184,7 +199,7 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
         current_orientation = khepera_node.getOrientation()
         current_orientation = [
             [round(current_orientation[0], 2), round(current_orientation[1], 2)],
-            [round(current_orientation[6], 2), round(current_orientation[7], 2)]
+            [round(current_orientation[6], 2), round(current_orientation[7], 2)],
         ]
         print("Current orientation: ", current_orientation)
         print("Target orientation: ", target_orientation)
@@ -198,41 +213,32 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
 
 
 def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPEED):
-    desired_distance = 150  # Desired distance from the wall in sensor units
-    proportional_gain = 0.05  # Gain for the proportional control
-    
+    """
+    Wall follow algorithm for the robot.
+
+    robot: instance of the robot.
+    left_wheel, right_wheel: wheel motors.
+    ir_sensor_list: dictionary with the infrared sensors.
+    speed: speed of the wheels.
+    """
+
     # Check ir sensors
     while True:
         robot.step(TIME_STEP)
-        front_ir = ir_sensor_list["front infrared sensor"].getValue()
-        left_ir = ir_sensor_list["left infrared sensor"].getValue()
-        print ("Front IR: ", front_ir, "Left IR: ", left_ir)
-
-        # Calculate error between the current left sensor reading and the desired distance
-        distance_error = left_ir - desired_distance
+        front_ir = ir_sensor_list["front infrared sensor"]
+        left_ir = ir_sensor_list["left infrared sensor"]
 
         # If there is a wall in front of the robot
-        if front_ir >= 190:
+        if front_ir.getValue() >= 190:
             # Turn right
             turn(robot, left_wheel, right_wheel, 2, "right")
-        elif left_ir < 150:
+        elif left_ir.getValue() <= 160:
             # Turn left
+            print("Turning left")
             turn(robot, left_wheel, right_wheel, 2, "left")
-            move_forward(robot, left_wheel, right_wheel, 0.25, speed)
+            move_forward(robot, left_wheel, right_wheel, 0.25, front_ir, speed)
         else:
-            # Adjust the speed of the wheels based on the distance error
-            left_wheel_speed = speed + proportional_gain * distance_error
-            right_wheel_speed = speed - proportional_gain * distance_error
-
-            # Ensure that wheel speeds do not exceed the maximum speed
-            left_wheel_speed = max(min(left_wheel_speed, MAX_SPEED), -MAX_SPEED)
-            right_wheel_speed = max(min(right_wheel_speed, MAX_SPEED), -MAX_SPEED)
-
-            left_wheel.setVelocity(left_wheel_speed)
-            right_wheel.setVelocity(right_wheel_speed)
-
-            # Move forward a bit after adjusting the direction
-            move_forward(robot, left_wheel, right_wheel, 0.25, speed)
+            move_forward(robot, left_wheel, right_wheel, 0.25, front_ir, speed)
 
 
 def main():
@@ -240,10 +246,10 @@ def main():
     Función principal para controlar el robot.
     """
     # Activamos los dispositivos necesarios y obtenemos referencias a ellos.
-    robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera = init_devices(
+    robot, left_wheel, right_wheel, ir_sensor_list, _, _, _ = init_devices(
         TIME_STEP
     )
-    
+
     # wall follow
     wall_follow(robot, left_wheel, right_wheel, ir_sensor_list)
 
@@ -252,6 +258,7 @@ def main():
 
     # Girar el robot 90 grados a la izquierda.
     # turn(robot, left_wheel, right_wheel, CRUISE_SPEED, "left")
+
 
 if __name__ == "__main__":
     main()
