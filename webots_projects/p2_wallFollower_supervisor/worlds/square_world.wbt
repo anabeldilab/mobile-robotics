@@ -1,0 +1,148 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/robots/k-team/khepera4/protos/Khepera4.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/appearances/protos/Roughcast.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/apartment_structure/protos/Wall.proto"
+
+WorldInfo {
+  info [
+    "Rob Square"
+  ]
+  title "Rob Square"
+  basicTimeStep 16
+  coordinateSystem "NUE"
+}
+Viewpoint {
+  orientation -0.7071013670337224 0.7071033564636264 0.0035355362980202558 3.148667715521632
+  position 0.7039038732430858 6.574119619992276 0.2899569548530631
+}
+TexturedBackground {
+  texture "mars"
+  skybox FALSE
+}
+TexturedBackgroundLight {
+  castShadows FALSE
+}
+RectangleArena {
+  translation 0.0133855 0 0.22826
+  rotation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0943951023931953
+  floorSize 3 3
+}
+Wall {
+  translation -1.36 0.05 0.73
+  rotation 0 1 0 0
+  name "wall(2)"
+  size 0.25 0.1 1
+}
+Wall {
+  translation 1.39 0.05 0.73
+  rotation 0 1 0 0
+  name "wall(13)"
+  size 0.25 0.1 1
+}
+Wall {
+  translation -1.11 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(5)"
+  size 0.25 0.1 0.75
+}
+Wall {
+  translation 1.14 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(10)"
+  size 0.25 0.1 0.75
+}
+Wall {
+  translation -1.36 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(4)"
+  size 0.25 0.1 1
+}
+Wall {
+  translation -0.86 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(3)"
+  size 0.25 0.1 0.5
+}
+Wall {
+  translation 0.89 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(11)"
+  size 0.25 0.1 0.5
+}
+Wall {
+  translation 1.39 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(9)"
+  size 0.25 0.1 1
+}
+Wall {
+  translation -0.61 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(7)"
+  size 0.25 0.1 0.25
+}
+Wall {
+  translation 0.64 0.05 -1.27
+  rotation 0 1 0 0
+  name "wall(12)"
+  size 0.25 0.1 0.25
+}
+Wall {
+  translation -0.86 0.05 1.23
+  rotation 0 1 0 0
+  name "wall(6)"
+  size 0.25 0.1 0.5
+}
+Wall {
+  translation 0.89 0.05 1.23
+  rotation 0 1 0 0
+  name "wall(15)"
+  size 0.25 0.1 0.5
+}
+Wall {
+  translation -0.61 0.05 1.48
+  rotation 0 1 0 0
+  name "wall(8)"
+  size 0.25 0.1 0.25
+}
+Wall {
+  translation 0.64 0.05 1.48
+  rotation 0 1 0 0
+  name "wall(16)"
+  size 0.25 0.1 0.25
+}
+Wall {
+  translation 1.26398 0.050005 0.6
+  rotation 2.560909999991428e-06 -0.9999999999966527 -3.694309999987634e-07 -1.5708053071795867
+  name "Object"
+  size 0.25 0.1 0.25
+  appearance Roughcast {
+    colorOverride 1 1 0
+    textureTransform TextureTransform {
+    }
+  }
+}
+Wall {
+  translation -1.11 0.05 0.98
+  rotation 0 1 0 0
+  name "wall(1)"
+  size 0.25 0.1 0.75
+}
+Wall {
+  translation 1.14 0.05 0.98
+  rotation 0 1 0 0
+  name "wall(14)"
+  size 0.25 0.1 0.75
+}
+DEF KHEPERA Khepera4 {
+  hidden translation_1 0 0.0527 0.021
+  hidden translation_2 0 -0.0527 0.021
+  translation -1.11 -8.02626914676724e-05 0.8600000001208784
+  rotation -1 9.641983324840254e-16 9.637407396032154e-16 1.5707963275273655
+  controller "supervisor_prueba"
+  supervisor TRUE
+}
