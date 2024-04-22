@@ -5,7 +5,7 @@ Universidade da Coruña
 Author: Anabel Díaz Labrador
         Jaime Pablo Pérez Moro
 
-Control del movimiento del robot Khepera IV en Webots usando Supervisor.
+Control of the Khepera IV robot's movement in Webots using Supervisor.
 """
 
 from controller import Supervisor
@@ -18,14 +18,14 @@ ORIENTATIONS = {
     "W": [[-1, 0], [0, 1]],
 }
 
-# Máxima velocidad de las ruedas soportada por el robot (khepera4).
+# Maximum wheel speed supported by the robot (khepera4).
 MAX_SPEED = 47.6
-# Velocidad por defecto para este comportamiento.
+# Default speed for this behavior.
 CRUISE_SPEED = 4
-# Time step por defecto para el controlador.
+# Default time step for the controller.
 TIME_STEP = 32
 
-# Nombres de los sensores de distancia basados en infrarrojo.
+# Names of the infrared-based distance sensors.
 INFRARED_SENSORS_NAMES = [
     "rear left infrared sensor",
     "left infrared sensor",
@@ -40,10 +40,15 @@ INFRARED_SENSORS_NAMES = [
 
 def enable_distance_sensors(robot, time_step, sensor_names):
     """
-    Obtener y activar los sensores de distancia.
+    Activate and retrieve distance sensors.
 
-    Return: diccionario con los sensores de distancia activados, en el mismo orden
-    establecido en la lista de nombres (sensorNames).
+    Parameters:
+    - robot: instance of the robot.
+    - time_step: update interval for sensors/actuators in milliseconds.
+    - sensor_names: list of sensor names to activate.
+
+    Returns:
+    - dict: Dictionary with activated distance sensors, ordered as in the sensor_names list.
     """
     sensor_dict = {}
 
@@ -56,39 +61,29 @@ def enable_distance_sensors(robot, time_step, sensor_names):
 
 def init_devices(time_step):
     """
-    Obtener y configurar los dispositivos necesarios.
+    Set up and retrieve necessary devices.
 
-    timeStep: tiempo (en milisegundos) de actualización por defecto para los sensores/actuadores
-      (cada dispositivo puede tener un valor diferente).
+    Parameters:
+    - time_step: default update interval in milliseconds for sensors/actuators.
+
+    Returns:
+    - tuple: Contains instances of the robot, wheel motors, infrared sensors, position sensors, and
+    camera.
     """
-
-    # Get pointer to the robot.
     robot = Supervisor()
 
-    # Si queremos obtener el timestep de la simulación.
-    # simTimeStep = int(robot.getBasicTimeStep())
-
-    # Obtener dispositivos correspondientes a los motores de las ruedas.
     left_wheel = robot.getDevice("left wheel motor")
     right_wheel = robot.getDevice("right wheel motor")
-
-    # Configuración inicial para utilizar movimiento por posición (necesario para odometría).
-    # En movimiento por velocidad, establecer posición a infinito (wheel.setPosition(float('inf'))).
     left_wheel.setPosition(float("inf"))
     right_wheel.setPosition(float("inf"))
     left_wheel.setVelocity(0)
     right_wheel.setVelocity(0)
 
-    # Obtener una lista con los sensores infrarrojos ya activados
     ir_sensor_list = enable_distance_sensors(robot, time_step, INFRARED_SENSORS_NAMES)
 
-    # Obtener el dispositivo de la cámara
     camera = robot.getDevice("camera")
-    # Activar el dispositivo de la cámara (el tiempo de actualización de los frames
-    # de la cámara no debería ser muy alto debido al alto volumen de datos que implica).
     camera.enable(time_step * 10)
 
-    # Obtener y activar los sensores de posición de las ruedas (encoders).
     pos_l = robot.getDevice("left wheel sensor")
     pos_r = robot.getDevice("right wheel sensor")
     pos_l.enable(time_step)
@@ -162,16 +157,16 @@ def change_position(current_position, orientation):
     Parameters:
     - current_position (list of int): The current position of the robot as a list [row, column].
     - orientation (str): The current orientation of the robot, expected to be 'N', 'E', 'S', or 'W'.
-    
+
     Returns:
     - list of int: Updated position of the robot after moving according to the orientation.
-    
+
     Raises:
     - ValueError: If an invalid orientation is provided.
     """
     if not isinstance(current_position, list) or len(current_position) != 2:
         raise ValueError("current_position must be a list of two integers")
-    if orientation not in ('N', 'E', 'S', 'W'):
+    if orientation not in ("N", "E", "S", "W"):
         raise ValueError("Invalid orientation. Must be 'N', 'E', 'S', or 'W'.")
 
     if orientation == "N":
@@ -195,17 +190,13 @@ def get_orientation(khepera_node):
 
     Returns:
     - str: The cardinal orientation of the node ('N', 'E', 'S', 'W').
-
-    Notes:
-    - Assumes that ORIENTATIONS is a predefined global dictionary mapping cardinal directions
-      to matrix orientation representations.
     """
     orientation_matrix = khepera_node.getOrientation()
     simplified_orientation = [
         [round(orientation_matrix[0]), round(orientation_matrix[1])],
         [round(orientation_matrix[6]), round(orientation_matrix[7])],
     ]
-    # Calcular la rotación objetivo
+    # Calculate the simplified orientation based on the main components
     if simplified_orientation == ORIENTATIONS["N"]:
         simplified_orientation = "N"
     elif simplified_orientation == ORIENTATIONS["E"]:
@@ -244,20 +235,21 @@ def get_target_orientation(khepera_node, direction="left"):
             break
 
     if current_cardinal is None:
-        raise ValueError("Current orientation does not match any known cardinal direction.")
+        raise ValueError(
+            "Current orientation does not match any known cardinal direction."
+        )
 
     # Define turn mapping based on current cardinal direction
     turn_mapping = {
-        'N': {'left': ORIENTATIONS['W'], 'right': ORIENTATIONS['E']},
-        'E': {'left': ORIENTATIONS['N'], 'right': ORIENTATIONS['S']},
-        'S': {'left': ORIENTATIONS['E'], 'right': ORIENTATIONS['W']},
-        'W': {'left': ORIENTATIONS['S'], 'right': ORIENTATIONS['N']}
+        "N": {"left": ORIENTATIONS["W"], "right": ORIENTATIONS["E"]},
+        "E": {"left": ORIENTATIONS["N"], "right": ORIENTATIONS["S"]},
+        "S": {"left": ORIENTATIONS["E"], "right": ORIENTATIONS["W"]},
+        "W": {"left": ORIENTATIONS["S"], "right": ORIENTATIONS["N"]},
     }
 
     # Get the target orientation based on the direction
     target_orientation = turn_mapping[current_cardinal][direction]
     return target_orientation
-
 
 
 def correct_trajectory(
@@ -266,12 +258,13 @@ def correct_trajectory(
     """
     Correct the trajectory of the robot based on the IR sensors.
 
-    robot: instance of the robot.
-    left_wheel, right_wheel: wheel motors.
-    left_ir: left infrared sensor.
-    right_ir: right infrared sensor.
-    back_ir: back infrared sensor.
-    speed: speed of the wheels.
+    Parameters:
+    - robot: instance of the robot.
+    - left_wheel, right_wheel: wheel motors.
+    - left_ir: left infrared sensor.
+    - right_ir: right infrared sensor.
+    - back_ir: back infrared sensor.
+    - speed: speed of the wheels.
     """
     # If the robot is too close to the wall, turn right
     left_ir_value = left_ir.getValue()
@@ -302,9 +295,10 @@ def turn_tolerance(current, target, tolerance):
     Check if the current orientation matrix is within the specified tolerance of the target
     orientation matrix.
 
-    :param current: 2x2 list (matrix) representing the current orientation.
-    :param target: 2x2 list (matrix) representing the target orientation.
-    :param tolerance: float, the tolerance for each element in the orientation matrices.
+    Parameters:
+    - current: 2x2 list (matrix) representing the current orientation.
+    - target: 2x2 list (matrix) representing the target orientation.
+    - tolerance: float, the tolerance for each element in the orientation matrices.
     :return: bool, True if within tolerance, False otherwise.
     """
     return all(
@@ -316,21 +310,21 @@ def turn_tolerance(current, target, tolerance):
 
 def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
     """
-    Hace que el robot gire n grados a la izquierda.
+    Rotate the robot a specified number of degrees.
 
-    robot: instancia del robot.
-    leftWheel, rightWheel: dispositivos de los motores de las ruedas.
-    speed: velocidad de las ruedas durante el giro.
-    direction: dirección del giro (izquierda o derecha).
+    Parameters:
+    - robot: instance of the robot.
+    - left_wheel: left wheel motor device.
+    - right_wheel: right wheel motor device.
+    - speed: wheel speed during the rotation.
+    - direction: direction of the rotation (left or right).
     """
 
     khepera_node = robot.getFromDef("Khepera")
 
-    # Obtener la orientación target del robot
     target_orientation = get_target_orientation(khepera_node, direction)
 
-    # Configurar las velocidades de las ruedas para el giro:
-    # la izquierda hacia atrás, la derecha hacia adelante
+    # Rotate the robot
     if direction == "left":
         left_wheel.setVelocity(-speed)
         right_wheel.setVelocity(speed)
@@ -347,26 +341,26 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
         if turn_tolerance(current_orientation, target_orientation, 0.01):
             break
 
-    # Detener las ruedas
     left_wheel.setVelocity(0)
     right_wheel.setVelocity(0)
 
 
 def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPEED):
     """
-    Wall follow algorithm for the robot.
-    Map the environment and follow the wall.
+    Implements a wall following algorithm to map the environment and navigate along walls.
 
-    robot: instance of the robot.
-    left_wheel, right_wheel: wheel motors.
-    ir_sensor_list: dictionary with the infrared sensors.
-    speed: speed of the wheels.
+    Parameters:
+    - robot: instance of the robot.
+    - left_wheel: left wheel motor device.
+    - right_wheel: right wheel motor device.
+    - ir_sensor_list: dictionary containing activated infrared sensors.
+    - speed: speed of the wheels during navigation.
+
+    Details:
+    The function continuously updates an environmental map while following the perimeter of the
+    walls. If a wall is detected in front, the robot may turn to avoid it. The loop terminates
+    when the robot returns to the start position, indicated by coordinates.
     """
-
-    # Map the environment with matrix
-    # 0: free space
-    # 1: wall
-    # 2: Start
     khepera_node = robot.getFromDef("Khepera")
     env_map = create_map()
     current_position = [int(MAP_SIZE / 2), int(MAP_SIZE / 2)]
@@ -399,7 +393,8 @@ def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPE
             back_ir,
         )
 
-        # If there is a wall in front of the robot, and if the robot turn right is not the start position
+        # If there is a wall in front of the robot, and if the robot turn right is not the start
+        # position
         if front_ir.getValue() >= 190 and not left_ir.getValue() <= 160:
             # Turn right
             turn(robot, left_wheel, right_wheel, 2, "right")

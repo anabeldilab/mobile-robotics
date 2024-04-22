@@ -138,4 +138,3 @@ def fill_map(matrix):
             dfs(rows - 1, j)
 
     return matrix
-
