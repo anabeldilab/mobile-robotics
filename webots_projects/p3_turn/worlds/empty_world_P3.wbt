@@ -1,0 +1,25 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/k-team/khepera4/protos/Khepera4.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.5830377624668651 0.5830377137357141 0.565803845780022 2.111806248431221
+  position -2.3986326886319168e-05 0.04706429406283289 1.5642520942462292
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 12 12
+}
+DEF Khepera Khepera4 {
+  rotation -1.761868994537245e-07 2.1301275085657805e-07 0.9999999999999618 0.013032557598884251
+  controller "turn_test_jaime"
+  supervisor TRUE
+}
