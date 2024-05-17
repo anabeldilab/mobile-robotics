@@ -8,7 +8,8 @@ Author: Anabel Díaz Labrador
 Control of the Khepera IV robot's movement in Webots using Supervisor.
 """
 
-from controller import Supervisor
+import math
+from controller import Robot
 from .mapping import create_map, display_map, update_map, fill_map, MAP_SIZE
 
 ORIENTATIONS = {
@@ -70,7 +71,7 @@ def init_devices(time_step):
     - tuple: Contains instances of the robot, wheel motors, infrared sensors, position sensors, and
     camera.
     """
-    robot = Supervisor()
+    robot = Robot()
 
     left_wheel = robot.getDevice("left wheel motor")
     right_wheel = robot.getDevice("right wheel motor")
@@ -88,8 +89,11 @@ def init_devices(time_step):
     pos_r = robot.getDevice("right wheel sensor")
     pos_l.enable(time_step)
     pos_r.enable(time_step)
+    
+    gyro = robot.getDevice('gyro')
+    gyro.enable(TIME_STEP)
 
-    return robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera
+    return robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera, gyro
 
 
 def move_forward(
@@ -308,8 +312,8 @@ def turn_tolerance(current, target, tolerance):
     )
 
 
-def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
-    """
+""" def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
+
     Rotate the robot a specified number of degrees.
 
     Parameters:
@@ -318,7 +322,7 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
     - right_wheel: right wheel motor device.
     - speed: wheel speed during the rotation.
     - direction: direction of the rotation (left or right).
-    """
+
 
     khepera_node = robot.getFromDef("Khepera")
 
@@ -342,7 +346,7 @@ def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
             break
 
     left_wheel.setVelocity(0)
-    right_wheel.setVelocity(0)
+    right_wheel.setVelocity(0) """
 
 
 def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPEED):
@@ -430,3 +434,39 @@ def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPE
 
     env_map = fill_map(env_map)
     display_map(env_map)
+
+
+def turn_gyro(robot, left_wheel, right_wheel, gyro, speed=CRUISE_SPEED, direction="left"):
+    """
+    Rotate the robot 90 degrees to the left or right.
+    
+    Parameters:
+    - robot: instance of the robot.
+    - left_wheel: left wheel motor device.
+    - right_wheel: right wheel motor device.
+    - gyro: gyro sensor.
+    - speed: wheel speed during the rotation.
+    - direction: direction of the rotation (left or right).
+    """
+    target_angle = math.radians(90)  # Convertir 90 grados a radianes
+    current_angle = 0.0  # Ángulo actual, empezamos en 0
+
+    # Rotate the robot
+    if direction == "left":
+        left_wheel.setVelocity(-speed)
+        right_wheel.setVelocity(speed)
+    else:
+        left_wheel.setVelocity(speed)
+        right_wheel.setVelocity(-speed)
+
+    while robot.step(TIME_STEP) != -1:
+        gyro_values = gyro.getValues()
+        angular_velocity_rad = gyro_values[2]
+        current_angle += angular_velocity_rad * TIME_STEP / 1000
+        print("Current angle: ", math.degrees(current_angle))
+
+        if abs(current_angle) >= target_angle:
+            break
+
+    left_wheel.setVelocity(0)
+    right_wheel.setVelocity(0)
