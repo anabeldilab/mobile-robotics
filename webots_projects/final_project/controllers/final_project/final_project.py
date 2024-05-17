@@ -8,7 +8,7 @@ Author: Anabel Díaz Labrador
 Control del robot Khepera IV en Webots usando Supervisor.
 """
 
-from src.movement import init_devices, wall_follow, TIME_STEP, turn_gyro, move_forward
+from src.movement import init_devices_robot, wall_follow, TIME_STEP, turn_gyro, move_forward
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
     Función principal para controlar el robot.
     """
     # Activamos los dispositivos necesarios y obtenemos referencias a ellos.
-    robot, left_wheel, right_wheel, ir_sensor_list, _, _, camera, gyro = init_devices(
+    robot, left_wheel, right_wheel, ir_sensor_list, _, _, camera, gyro = init_devices_robot(
         TIME_STEP
     )
 

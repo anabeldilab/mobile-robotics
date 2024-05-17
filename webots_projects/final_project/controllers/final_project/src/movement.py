@@ -10,6 +10,7 @@ Control of the Khepera IV robot's movement in Webots using Supervisor.
 
 import math
 from controller import Robot
+from controller import Supervisor
 from .mapping import create_map, display_map, update_map, fill_map, MAP_SIZE
 
 ORIENTATIONS = {
@@ -61,6 +62,42 @@ def enable_distance_sensors(robot, time_step, sensor_names):
 
 
 def init_devices(time_step):
+    """
+    Set up and retrieve necessary devices.
+
+    Parameters:
+    - time_step: default update interval in milliseconds for sensors/actuators.
+
+    Returns:
+    - tuple: Contains instances of the robot, wheel motors, infrared sensors, position sensors, and
+    camera.
+    """
+    robot = Supervisor()
+
+    left_wheel = robot.getDevice("left wheel motor")
+    right_wheel = robot.getDevice("right wheel motor")
+    left_wheel.setPosition(float("inf"))
+    right_wheel.setPosition(float("inf"))
+    left_wheel.setVelocity(0)
+    right_wheel.setVelocity(0)
+
+    ir_sensor_list = enable_distance_sensors(robot, time_step, INFRARED_SENSORS_NAMES)
+
+    camera = robot.getDevice("camera")
+    camera.enable(time_step * 10)
+
+    pos_l = robot.getDevice("left wheel sensor")
+    pos_r = robot.getDevice("right wheel sensor")
+    pos_l.enable(time_step)
+    pos_r.enable(time_step)
+    
+    gyro = robot.getDevice('gyro')
+    gyro.enable(TIME_STEP)
+
+    return robot, left_wheel, right_wheel, ir_sensor_list, pos_l, pos_r, camera, gyro
+
+
+def init_devices_robot(time_step):
     """
     Set up and retrieve necessary devices.
 
