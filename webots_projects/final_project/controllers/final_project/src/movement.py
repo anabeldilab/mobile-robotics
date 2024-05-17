@@ -312,8 +312,8 @@ def turn_tolerance(current, target, tolerance):
     )
 
 
-""" def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
-
+def turn(robot, left_wheel, right_wheel, speed=CRUISE_SPEED, direction="left"):
+    """
     Rotate the robot a specified number of degrees.
 
     Parameters:
@@ -322,6 +322,7 @@ def turn_tolerance(current, target, tolerance):
     - right_wheel: right wheel motor device.
     - speed: wheel speed during the rotation.
     - direction: direction of the rotation (left or right).
+    """
 
 
     khepera_node = robot.getFromDef("Khepera")
@@ -346,7 +347,7 @@ def turn_tolerance(current, target, tolerance):
             break
 
     left_wheel.setVelocity(0)
-    right_wheel.setVelocity(0) """
+    right_wheel.setVelocity(0)
 
 
 def wall_follow(robot, left_wheel, right_wheel, ir_sensor_list, speed=CRUISE_SPEED):
