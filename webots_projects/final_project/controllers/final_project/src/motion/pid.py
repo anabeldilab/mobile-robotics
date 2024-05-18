@@ -39,16 +39,12 @@ class PID:
         self.previous_error = 0
         self.integral = 0
 
-    def compute(self, target, measured_value, mode='PID'):
+    def compute(self, target, measured_value):
         error = target - measured_value
         output = 0
 
-        if mode in ('PI', 'PID'):
-            self.integral += error
-        if mode == 'PID':
-            derivative = error - self.previous_error
-        else:
-            derivative = 0
+        self.integral += error
+        derivative = error - self.previous_error
 
         output = self.kp * error + self.ki * self.integral + self.kd * derivative
         self.previous_error = error

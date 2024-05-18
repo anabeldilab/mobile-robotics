@@ -13,7 +13,7 @@ class Turn:
         """
         self.robot = robot
         self.devices = devices
-        self.pid = PID(2)
+        self.pid = PID(2, 0.001)
 
     def execute(self, direction="left"):
         """
@@ -32,7 +32,7 @@ class Turn:
             angular_velocity_rad = gyro_values[2]
             current_orientation += angular_velocity_rad * self.devices.time_step / 1000
 
-            pid_speed = self.pid.compute(target_angle, abs(current_orientation), mode='P') + 0.5
+            pid_speed = self.pid.compute(target_angle, abs(current_orientation))
             
             if direction == "left":
                 self.devices.left_wheel.setVelocity(-pid_speed)

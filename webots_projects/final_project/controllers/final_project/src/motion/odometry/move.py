@@ -11,7 +11,7 @@ class MoveForward:
         """
         self.robot = robot
         self.devices = devices
-        self.pid = PID(1.5)
+        self.pid = PID(1, 0.0001, 0.00001)
 
     def execute(self, distance=0.25):
         """
@@ -40,8 +40,8 @@ class MoveForward:
             current_pos_l = self.devices.pos_l.getValue()
             current_pos_r = self.devices.pos_r.getValue()
 
-            pid_speed_l = self.pid.compute(target_pos_l, current_pos_l, mode='P') + 2
-            pid_speed_r = self.pid.compute(target_pos_r, current_pos_r, mode='P') + 2
+            pid_speed_l = self.pid.compute(target_pos_l, current_pos_l)
+            pid_speed_r = self.pid.compute(target_pos_r, current_pos_r)
 
             self.devices.left_wheel.setVelocity(pid_speed_l)
             self.devices.right_wheel.setVelocity(pid_speed_r)
