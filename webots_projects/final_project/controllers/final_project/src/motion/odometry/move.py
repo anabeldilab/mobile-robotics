@@ -1,5 +1,6 @@
 from src.motion.pid import PID
 
+
 class MoveForward:
     def __init__(self, robot, devices):
         """
@@ -11,7 +12,7 @@ class MoveForward:
         """
         self.robot = robot
         self.devices = devices
-        self.pid = PID(1, 0.0001, 0.00001)
+        self.pid = PID(1, 0.0001, 0.000001)
 
     def execute(self, distance=0.25):
         """
@@ -26,7 +27,9 @@ class MoveForward:
         initial_pos_r = self.devices.pos_r.getValue()
 
         # Check if initial positions are floats
-        while not isinstance(initial_pos_l, float) or not isinstance(initial_pos_r, float):
+        while not isinstance(initial_pos_l, float) or not isinstance(
+            initial_pos_r, float
+        ):
             self.robot.step(self.devices.time_step)
             initial_pos_l = self.devices.pos_l.getValue()
             initial_pos_r = self.devices.pos_r.getValue()
@@ -47,7 +50,10 @@ class MoveForward:
             self.devices.right_wheel.setVelocity(pid_speed_r)
 
             # Check if the target position has been reached
-            if current_pos_l >= target_pos_l and current_pos_r >= target_pos_r:
+            if (
+                current_pos_l >= target_pos_l
+                and current_pos_r >= target_pos_r
+            ):
                 break
 
         self.devices.left_wheel.setVelocity(0)

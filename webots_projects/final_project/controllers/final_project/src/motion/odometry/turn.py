@@ -13,7 +13,7 @@ class Turn:
         """
         self.robot = robot
         self.devices = devices
-        self.pid = PID(2, 0.001)
+        self.pid = PID(1.5, 0.001)
 
     def execute(self, direction="left"):
         """

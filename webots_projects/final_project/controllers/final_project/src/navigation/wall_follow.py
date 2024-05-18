@@ -100,7 +100,7 @@ class WallFollowerSupervisor:
         current_position = [int(MAP_SIZE / 2), int(MAP_SIZE / 2)]
         current_orientation = OrientationSupervisor.get_orientation(khepera_node)
 
-        self.find_wall()
+        current_orientation = self.find_wall(khepera_node, current_orientation)
 
         while True:
             self.robot.step(self.devices.time_step)
@@ -161,18 +161,19 @@ class WallFollowerSupervisor:
         env_map = fill_map(env_map)
         display_map(env_map)
 
-    def find_wall(self):
+    def find_wall(self, khepera_node, current_orientation):
         """Find the wall and align the robot to it the first time it starts moving."""
         if self.devices.ir_sensor_list["front infrared sensor"].getValue() >= 190:
             self.turn.execute(direction="right")
-            self.current_cardinal = OrientationOdometry.get_target_orientation(
-                self.current_cardinal, "right"
+            current_orientation = OrientationSupervisor.get_orientation(
+                khepera_node
             )
         elif self.devices.ir_sensor_list["right infrared sensor"].getValue() >= 190:
             self.turn.execute(direction="left")
-            self.current_cardinal = OrientationOdometry.get_target_orientation(
-                self.current_cardinal, "left"
+            current_orientation = OrientationSupervisor.get_orientation(
+                khepera_node
             )
+        return current_orientation
 
 
 class WallFollower:
