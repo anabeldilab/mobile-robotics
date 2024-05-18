@@ -108,6 +108,7 @@ class WallFollowerSupervisor:
             left_ir = self.devices.ir_sensor_list["left infrared sensor"]
             right_ir = self.devices.ir_sensor_list["right infrared sensor"]
             back_ir = self.devices.ir_sensor_list["rear infrared sensor"]
+            front_is_yellow = self.devices.detect_yellow_block()
 
             self.correct_trajectory(speed)
 
@@ -119,6 +120,7 @@ class WallFollowerSupervisor:
                 left_ir,
                 right_ir,
                 back_ir,
+                front_is_yellow,
             )
 
             if front_ir.getValue() >= 190 and not left_ir.getValue() <= 160:
@@ -140,6 +142,7 @@ class WallFollowerSupervisor:
                     left_ir,
                     right_ir,
                     back_ir,
+                    front_is_yellow,
                 )
 
                 if self.move_forward.execute(0.25, speed):
@@ -233,6 +236,7 @@ class WallFollower:
             left_ir = self.devices.ir_sensor_list["left infrared sensor"]
             right_ir = self.devices.ir_sensor_list["right infrared sensor"]
             back_ir = self.devices.ir_sensor_list["rear infrared sensor"]
+            front_is_yellow = self.devices.detect_yellow_block()
 
             env_map = update_map(
                 env_map,
@@ -242,6 +246,7 @@ class WallFollower:
                 left_ir,
                 right_ir,
                 back_ir,
+                front_is_yellow,
             )
 
             if front_ir.getValue() >= 190 and not left_ir.getValue() <= 160:
@@ -263,6 +268,7 @@ class WallFollower:
                     left_ir,
                     right_ir,
                     back_ir,
+                    front_is_yellow,
                 )
 
                 if self.move_forward.execute(0.25):

@@ -1,3 +1,6 @@
+import numpy as np
+import cv2
+
 class RobotDevices:
     WHEEL_BASE = 0.10829  # meters (105.4 mm)
     WHEEL_RADIUS = 0.021  # meters (21 mm)
@@ -66,7 +69,45 @@ class RobotDevices:
         camera = self.robot.getDevice("camera")
         camera.enable(self.time_step * 10)
         return camera
+    
+    def detect_yellow_block(self, threshold=0.1):
+        """
+        Detect a yellow block in front of the robot using the camera.
 
+        Parameters:
+        - threshold: Proportion of pixels to consider the object detected (0..1).
+
+        Returns:
+        - bool: True if the object is detected, False otherwise.
+        """
+        # Constants for yellow color in HSV
+        COLOR_RANGE_1 = (25, 50, 50)  # Lower bound of yellow in HSV
+        COLOR_RANGE_2 = (35, 255, 255)  # Upper bound of yellow in HSV
+
+        # Get camera image dimensions
+        W = self.camera.getWidth()
+        H = self.camera.getHeight()
+
+        # Get the image from the camera
+        image = np.frombuffer(self.camera.getImage(), np.uint8).reshape((H, W, 4))
+
+        # Convert the image from BGRA to BGR
+        image_bgr = image[:, :, :3]
+
+        # Convert BGR image to HSV
+        image_hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
+
+        # Create a mask for yellow color
+        mask = cv2.inRange(image_hsv, COLOR_RANGE_1, COLOR_RANGE_2)
+
+        # Count non-zero pixels in the mask
+        non_zero_count = cv2.countNonZero(mask)
+
+        # Calculate the ratio of yellow pixels to the total number of pixels
+        yellow_ratio = non_zero_count / (W * H)
+
+        # Return True if the yellow ratio exceeds the threshold
+        return yellow_ratio > threshold
 
     def init_position_sensors(self):
         """

@@ -56,7 +56,7 @@ def display_map(map_matrix):
     plt.show()
 
 
-def update_map(env_map, current_position, current_orientation, front_ir, left_ir, right_ir, back_ir):
+def update_map(env_map, current_position, current_orientation, front_ir, left_ir, right_ir, back_ir, front_cam_yellow_block):
     """
     Update the map with the position of the robot and detected walls based on IR sensor values.
 
@@ -88,12 +88,15 @@ def update_map(env_map, current_position, current_orientation, front_ir, left_ir
     env_map_copy = env_map.copy()
 
     # Process each sensor's value based on current orientation
-    for dx, dy, value in sensor_positions[current_orientation]:
+    for index, (dx, dy, value) in enumerate(sensor_positions[current_orientation]):
         nx, ny = current_position[0] + dx, current_position[1] + dy
         # Check if the new position is within the map boundaries
         if 0 <= nx < len(env_map) and 0 <= ny < len(env_map[0]):
-            if value >= 160:
+            if value >= 160 and env_map_copy[nx][ny] != 3:
                 env_map_copy[nx][ny] = 1
+            # If it's the first iteration (front sensor) and a yellow block is detected, mark the map
+            if index == 0 and front_cam_yellow_block and value >= 160:
+                env_map_copy[nx][ny] = 3
 
     # Set the robot's starting position (consider using a parameter for the map center)
     map_center = (len(env_map) // 2, len(env_map[0]) // 2)
@@ -116,7 +119,7 @@ def fill_map(matrix):
         stack = [(x, y)]
         while stack:
             cx, cy = stack.pop()
-            if cx < 0 or cx >= rows or cy < 0 or cy >= cols or matrix[cx][cy] == 1:
+            if cx < 0 or cx >= rows or cy < 0 or cy >= cols or matrix[cx][cy] == 1 or matrix[cx][cy] == 3:
                 continue
             matrix[cx][cy] = 1  # Mark as visited and change to 1
             # Push adjacent cells onto the stack

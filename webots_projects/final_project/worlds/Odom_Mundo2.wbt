@@ -4,14 +4,13 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/apartment_structure/protos/Wall.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Roughcast.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/k-team/khepera4/protos/Khepera4.proto"
 
 WorldInfo {
 }
 Viewpoint {
   orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
-  position -1.1366127833418396 1.379048592710232 0.948184506906969
+  position -0.43567574389067 -0.012061199798603338 8.04053167202135
 }
 TexturedBackground {
 }
@@ -29,16 +28,38 @@ Wall {
   name "wall(5)"
   size 0.25 1.75 0.1
 }
-Wall {
+Solid {
   translation -0.125 -0.375 0
-  name "CuboAmarillo"
-  size 0.25 0.25 0.1
-  appearance Roughcast {
-    colorOverride 1 1 0
-    textureTransform TextureTransform {
-      scale 2.4 1
+  children [
+    Solid {
+      translation 0 0 0.05
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 1 1 0
+            roughness 1
+            metalness 0
+            normalMap ImageTexture {
+              url [
+                "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/textures/roughcast/roughcast_normal.jpg"
+              ]
+            }
+            textureTransform TextureTransform {
+              scale 2.4 1
+            }
+          }
+          geometry Box {
+            size 0.25 0.25 0.1
+          }
+        }
+      ]
+      boundingObject Box {
+        size 0.25 0.25 0.1
+      }
     }
-  }
+  ]
+  name "CuboAmarillo"
+  model "wall"
 }
 Wall {
   translation 0.5 1.25 0
@@ -63,4 +84,5 @@ Wall {
 Khepera4 {
   translation -1.13 1.38 0
   rotation 0 0 1 -1.5707953071795862
+  controller "final_project"
 }
