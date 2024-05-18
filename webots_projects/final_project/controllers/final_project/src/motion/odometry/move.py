@@ -1,3 +1,5 @@
+from src.motion.pid import PID
+
 class MoveForward:
     def __init__(self, robot, devices):
         """
@@ -9,8 +11,9 @@ class MoveForward:
         """
         self.robot = robot
         self.devices = devices
+        self.pid = PID(1.5)
 
-    def execute(self, distance=0.25, speed=10):
+    def execute(self, distance=0.25):
         """
         Move the robot forward a specific distance using odometry.
 
@@ -22,20 +25,29 @@ class MoveForward:
         initial_pos_l = self.devices.pos_l.getValue()
         initial_pos_r = self.devices.pos_r.getValue()
 
-        if initial_pos_l is not float or initial_pos_r is not float:
+        # Check if initial positions are floats
+        while not isinstance(initial_pos_l, float) or not isinstance(initial_pos_r, float):
+            self.robot.step(self.devices.time_step)
             initial_pos_l = self.devices.pos_l.getValue()
             initial_pos_r = self.devices.pos_r.getValue()
 
-        self.devices.left_wheel.setVelocity(speed)
-        self.devices.right_wheel.setVelocity(speed)
+        target_pos_l = initial_pos_l + delta_position
+        target_pos_r = initial_pos_r + delta_position
 
         while self.robot.step(self.devices.time_step) != -1:
+            # Set target position
+
             current_pos_l = self.devices.pos_l.getValue()
             current_pos_r = self.devices.pos_r.getValue()
-            left_distance = (current_pos_l - initial_pos_l) * self.devices.WHEEL_RADIUS
-            right_distance = (current_pos_r - initial_pos_r) * self.devices.WHEEL_RADIUS
 
-            if (left_distance + right_distance) / 2.0 >= distance:
+            pid_speed_l = self.pid.compute(target_pos_l, current_pos_l, mode='P') + 2
+            pid_speed_r = self.pid.compute(target_pos_r, current_pos_r, mode='P') + 2
+
+            self.devices.left_wheel.setVelocity(pid_speed_l)
+            self.devices.right_wheel.setVelocity(pid_speed_r)
+
+            # Check if the target position has been reached
+            if current_pos_l >= target_pos_l and current_pos_r >= target_pos_r:
                 break
 
         self.devices.left_wheel.setVelocity(0)

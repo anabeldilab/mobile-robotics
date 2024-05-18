@@ -94,4 +94,3 @@ class RobotDevices:
         gyro = self.robot.getDevice("gyro")
         gyro.enable(self.time_step)
         return gyro
-    

@@ -1,5 +1,4 @@
-from src.motion.movement import create_map, MAP_SIZE, update_map, change_position
-from src.map.mapping import fill_map, display_map
+from src.map.mapping import fill_map, display_map, create_map, update_map, MAP_SIZE
 
 from src.motion.supervisor.orientation import Orientation as OrientationSupervisor
 
@@ -20,6 +19,36 @@ class WallFollowerSupervisor:
         self.move_forward = move_forward
         self.turn = turn
         self.devices = devices
+
+    def change_position(self, current_position, orientation):
+        """
+        Change the position of the robot based on the current orientation in a grid.
+
+        Parameters:
+        - current_position (list of int): The current position of the robot as a list [row, column].
+        - orientation (str): The current orientation of the robot, expected to be 'N', 'E', 'S', or 'W'.
+
+        Returns:
+        - list of int: Updated position of the robot after moving according to the orientation.
+
+        Raises:
+        - ValueError: If an invalid orientation is provided.
+        """
+        if not isinstance(current_position, list) or len(current_position) != 2:
+            raise ValueError("current_position must be a list of two integers")
+        if orientation not in ("N", "E", "S", "W"):
+            raise ValueError("Invalid orientation. Must be 'N', 'E', 'S', or 'W'.")
+
+        if orientation == "N":
+            current_position[0] -= 1  # Move up in the grid (decrease row index)
+        elif orientation == "E":
+            current_position[1] += 1  # Move right in the grid (increase column index)
+        elif orientation == "S":
+            current_position[0] += 1  # Move down in the grid (increase row index)
+        elif orientation == "W":
+            current_position[1] -= 1  # Move left in the grid (decrease column index)
+
+        return current_position
 
     def correct_trajectory(self, speed=10):
         """
@@ -107,12 +136,12 @@ class WallFollowerSupervisor:
                 )
 
                 if self.move_forward.execute(0.25, speed):
-                    current_position = change_position(
+                    current_position = self.change_position(
                         current_position, current_orientation
                     )
             else:
                 if self.move_forward.execute(0.25, speed):
-                    current_position = change_position(
+                    current_position = self.change_position(
                         current_position, current_orientation
                     )
 
@@ -191,10 +220,10 @@ class WallFollower:
             )
 
             if front_ir.getValue() >= 190 and not left_ir.getValue() <= 160:
-                self.turn.execute(direction="right", speed=2)
+                self.turn.execute(direction="right")
                 self.current_cardinal = OrientationOdometry.get_target_orientation(self.current_cardinal, "right")
             elif left_ir.getValue() <= 160:
-                self.turn.execute(direction="left", speed=2)
+                self.turn.execute(direction="left")
                 self.current_cardinal = OrientationOdometry.get_target_orientation(self.current_cardinal, "left")
 
                 env_map = update_map(
@@ -207,10 +236,10 @@ class WallFollower:
                     back_ir,
                 )
 
-                if self.move_forward.execute(0.25, speed):
+                if self.move_forward.execute(0.25):
                     self.current_position = self.change_position()
             else:
-                if self.move_forward.execute(0.25, speed):
+                if self.move_forward.execute(0.25):
                     self.current_position = self.change_position()
 
             if self.current_position == [int(MAP_SIZE / 2), int(MAP_SIZE / 2)]:
