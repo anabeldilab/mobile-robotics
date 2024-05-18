@@ -1,0 +1,65 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/apartment_structure/protos/Wall.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/Roughcast.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/k-team/khepera4/protos/Khepera4.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.5754161195919698 0.581199241007053 0.5754161377355915 2.0886361570272833
+  position -1.0260257645780217 -0.6411719158367835 3.7290097902442403
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 3 3
+}
+Wall {
+  translation -1.375 0.25 0
+  size 0.25 2.5 0.1
+}
+Wall {
+  translation -0.125 -0.375 0
+  name "wall(5)"
+  size 0.25 0.75 0.1
+}
+Wall {
+  translation 1.375 -0.875 0
+  name "CuboAmarillo"
+  size 0.25 0.25 0.1
+  appearance Roughcast {
+    colorOverride 1 1 0
+    textureTransform TextureTransform {
+      scale 2.4 1
+    }
+  }
+}
+Wall {
+  translation 0.125 1 0
+  name "wall(1)"
+  size 2.75 1 0.1
+}
+Wall {
+  translation 0.999 0.25 0
+  name "wall(2)"
+  size 1 0.5 0.1
+}
+Wall {
+  translation 1.125 -1.25 0
+  name "wall(3)"
+  size 0.75 0.5 0.1
+}
+Wall {
+  translation 0 -1.125 0
+  name "wall(4)"
+  size 1.5 0.75 0.1
+}
+Khepera4 {
+  translation -1.125 -0.625 0
+}
