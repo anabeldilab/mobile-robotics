@@ -4,6 +4,7 @@ from src.motion.supervisor.orientation import Orientation as OrientationSupervis
 
 from src.motion.odometry.orientation import Orientation as OrientationOdometry
 
+
 class WallFollowerSupervisor:
     def __init__(self, robot, move_forward, turn, devices):
         """
@@ -99,6 +100,8 @@ class WallFollowerSupervisor:
         current_position = [int(MAP_SIZE / 2), int(MAP_SIZE / 2)]
         current_orientation = OrientationSupervisor.get_orientation(khepera_node)
 
+        self.find_wall()
+
         while True:
             self.robot.step(self.devices.time_step)
             front_ir = self.devices.ir_sensor_list["front infrared sensor"]
@@ -120,10 +123,14 @@ class WallFollowerSupervisor:
 
             if front_ir.getValue() >= 190 and not left_ir.getValue() <= 160:
                 self.turn.execute(direction="right", speed=2)
-                current_orientation = OrientationSupervisor.get_orientation(khepera_node)
+                current_orientation = OrientationSupervisor.get_orientation(
+                    khepera_node
+                )
             elif left_ir.getValue() <= 160:
                 self.turn.execute(direction="left", speed=2)
-                current_orientation = OrientationSupervisor.get_orientation(khepera_node)
+                current_orientation = OrientationSupervisor.get_orientation(
+                    khepera_node
+                )
 
                 env_map = update_map(
                     env_map,
@@ -151,6 +158,19 @@ class WallFollowerSupervisor:
         env_map = fill_map(env_map)
         display_map(env_map)
 
+    def find_wall(self):
+        """Find the wall and align the robot to it the first time it starts moving."""
+        if self.devices.ir_sensor_list["front infrared sensor"].getValue() >= 190:
+            self.turn.execute(direction="right")
+            self.current_cardinal = OrientationOdometry.get_target_orientation(
+                self.current_cardinal, "right"
+            )
+        elif self.devices.ir_sensor_list["right infrared sensor"].getValue() >= 190:
+            self.turn.execute(direction="left")
+            self.current_cardinal = OrientationOdometry.get_target_orientation(
+                self.current_cardinal, "left"
+            )
+
 
 class WallFollower:
     def __init__(self, robot, devices, move_forward, turn):
@@ -177,7 +197,10 @@ class WallFollower:
         Returns:
         - list of int: Updated position of the robot after moving according to the orientation.
         """
-        if not isinstance(self.current_position, list) or len(self.current_position) != 2:
+        if (
+            not isinstance(self.current_position, list)
+            or len(self.current_position) != 2
+        ):
             raise ValueError("current_position must be a list of two integers")
         if self.current_cardinal not in ("N", "E", "S", "W"):
             raise ValueError("Invalid current_cardinal. Must be 'N', 'E', 'S', or 'W'.")
@@ -193,7 +216,7 @@ class WallFollower:
 
         return self.current_position
 
-    def follow_wall(self, speed=10):
+    def follow_wall(self):
         """
         Implements a wall following algorithm to map the environment and navigate along walls.
 
@@ -201,6 +224,8 @@ class WallFollower:
         - speed: Speed of the wheels during navigation.
         """
         env_map = create_map()
+
+        self.find_wall()
 
         while True:
             self.robot.step(self.devices.time_step)
@@ -221,10 +246,14 @@ class WallFollower:
 
             if front_ir.getValue() >= 190 and not left_ir.getValue() <= 160:
                 self.turn.execute(direction="right")
-                self.current_cardinal = OrientationOdometry.get_target_orientation(self.current_cardinal, "right")
+                self.current_cardinal = OrientationOdometry.get_target_orientation(
+                    self.current_cardinal, "right"
+                )
             elif left_ir.getValue() <= 160:
                 self.turn.execute(direction="left")
-                self.current_cardinal = OrientationOdometry.get_target_orientation(self.current_cardinal, "left")
+                self.current_cardinal = OrientationOdometry.get_target_orientation(
+                    self.current_cardinal, "left"
+                )
 
                 env_map = update_map(
                     env_map,
@@ -248,3 +277,16 @@ class WallFollower:
 
         env_map = fill_map(env_map)
         display_map(env_map)
+
+    def find_wall(self):
+        """Find the wall and align the robot to it the first time it starts moving."""
+        if self.devices.ir_sensor_list["front infrared sensor"].getValue() >= 190:
+            self.turn.execute(direction="right")
+            self.current_cardinal = OrientationOdometry.get_target_orientation(
+                self.current_cardinal, "right"
+            )
+        elif self.devices.ir_sensor_list["right infrared sensor"].getValue() >= 190:
+            self.turn.execute(direction="left")
+            self.current_cardinal = OrientationOdometry.get_target_orientation(
+                self.current_cardinal, "left"
+            )
