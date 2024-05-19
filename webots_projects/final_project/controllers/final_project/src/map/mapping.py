@@ -5,15 +5,13 @@ Universidade da Coruña
 Author: Anabel Díaz Labrador
         Jaime Pablo Pérez Moro
 
-Creación de un mapa del entorno.
+Environment mapping for the robot Khepera IV in Webots
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 MAP_SIZE = 25
-
 
 def create_map():
     """
@@ -41,7 +39,7 @@ def display_map(map_matrix):
     Parameters:
     - map_matrix: the map of the environment
     """
-    map_array = np.array(map_matrix)
+    map_array = np.array(map_matrix) 
 
     cmap = plt.cm.viridis
     norm = plt.Normalize(vmin=map_array.min(), vmax=map_array.max())
@@ -56,7 +54,16 @@ def display_map(map_matrix):
     plt.show()
 
 
-def update_map(env_map, current_position, current_orientation, front_ir, left_ir, right_ir, back_ir, front_cam_yellow_block):
+def update_map(
+    env_map,
+    current_position,
+    current_orientation,
+    front_ir,
+    left_ir,
+    right_ir,
+    back_ir,
+    front_cam_yellow_block,
+):
     """
     Update the map with the position of the robot and detected walls based on IR sensor values.
 
@@ -79,10 +86,30 @@ def update_map(env_map, current_position, current_orientation, front_ir, left_ir
 
     # Define relative positions for sensors based on orientation
     sensor_positions = {
-        "N": ((-1, 0, front_value), (0, -1, left_value), (0, 1, right_value), (1, 0, back_value)),
-        "E": ((0, 1, front_value), (-1, 0, left_value), (1, 0, right_value), (0, -1, back_value)),
-        "S": ((1, 0, front_value), (0, 1, left_value), (0, -1, right_value), (-1, 0, back_value)),
-        "W": ((0, -1, front_value), (1, 0, left_value), (-1, 0, right_value), (0, 1, back_value)),
+        "N": (
+            (-1, 0, front_value),
+            (0, -1, left_value),
+            (0, 1, right_value),
+            (1, 0, back_value),
+        ),
+        "E": (
+            (0, 1, front_value),
+            (-1, 0, left_value),
+            (1, 0, right_value),
+            (0, -1, back_value),
+        ),
+        "S": (
+            (1, 0, front_value),
+            (0, 1, left_value),
+            (0, -1, right_value),
+            (-1, 0, back_value),
+        ),
+        "W": (
+            (0, -1, front_value),
+            (1, 0, left_value),
+            (-1, 0, right_value),
+            (0, 1, back_value),
+        ),
     }
 
     env_map_copy = env_map.copy()
@@ -90,13 +117,20 @@ def update_map(env_map, current_position, current_orientation, front_ir, left_ir
     # Process each sensor's value based on current orientation
     for index, (dx, dy, value) in enumerate(sensor_positions[current_orientation]):
         nx, ny = current_position[0] + dx, current_position[1] + dy
+        print(
+            f"Sensor {index} - Current position: {current_position}, New position: {(nx, ny)}, Value: {value}"
+        )
+        # env_map_copy[current_position[0]][current_position[1]] = 2
         # Check if the new position is within the map boundaries
         if 0 <= nx < len(env_map) and 0 <= ny < len(env_map[0]):
-            if value >= 160 and env_map_copy[nx][ny] != 3:
-                env_map_copy[nx][ny] = 1
-            # If it's the first iteration (front sensor) and a yellow block is detected, mark the map
-            if index == 0 and front_cam_yellow_block and value >= 160:
+            # If it's the first iteration (front sensor) and a yellow block is detected, 
+            # mark the map
+            if index == 0 and front_cam_yellow_block and value >= 200:
+                print(f"Setting yellow block at position {(nx, ny)}")
                 env_map_copy[nx][ny] = 3
+            if value >= 200 and env_map_copy[nx][ny] != 3:
+                print(f"Setting wall at position {(nx, ny)}")
+                env_map_copy[nx][ny] = 1
 
     # Set the robot's starting position (consider using a parameter for the map center)
     map_center = (len(env_map) // 2, len(env_map[0]) // 2)
@@ -114,12 +148,20 @@ def fill_map(matrix):
     - matrix: the updated map of the environment
     """
     rows, cols = len(matrix), len(matrix[0])
+
     # Function to perform the DFS iteratively
     def dfs(x, y):
         stack = [(x, y)]
         while stack:
             cx, cy = stack.pop()
-            if cx < 0 or cx >= rows or cy < 0 or cy >= cols or matrix[cx][cy] == 1 or matrix[cx][cy] == 3:
+            if (
+                cx < 0
+                or cx >= rows
+                or cy < 0
+                or cy >= cols
+                or matrix[cx][cy] == 1
+                or matrix[cx][cy] == 3
+            ):
                 continue
             matrix[cx][cy] = 1  # Mark as visited and change to 1
             # Push adjacent cells onto the stack

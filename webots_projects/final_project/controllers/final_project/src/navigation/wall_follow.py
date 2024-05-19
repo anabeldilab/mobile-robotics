@@ -1,4 +1,4 @@
-from src.map.mapping import fill_map, display_map, create_map, update_map, MAP_SIZE
+from src.map.mapping import create_map, display_map, update_map, fill_map, MAP_SIZE
 
 from src.motion.supervisor.orientation import Orientation as OrientationSupervisor
 
