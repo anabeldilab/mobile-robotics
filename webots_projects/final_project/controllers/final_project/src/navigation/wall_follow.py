@@ -193,6 +193,7 @@ class WallFollower:
         self.turn = turn
         self.current_cardinal = "N"
         self.current_position = [int(MAP_SIZE / 2), int(MAP_SIZE / 2)]
+        self.goal_position = None
 
     def change_position(self):
         """
@@ -238,6 +239,10 @@ class WallFollower:
             right_ir = self.devices.ir_sensor_list["right infrared sensor"]
             back_ir = self.devices.ir_sensor_list["rear infrared sensor"]
             front_is_yellow = self.devices.detect_yellow_block()
+            print(f"current_position: {self.current_position}")
+            
+            if front_is_yellow and self.goal_position is None:
+                self.goal_position = self.current_position.copy()
 
             env_map = update_map(
                 env_map,
@@ -282,8 +287,11 @@ class WallFollower:
                 print("Start position reached.")
                 break
 
+            print(f"goal_position: {self.goal_position}")
+
         env_map = fill_map(env_map)
         display_map(env_map)
+        return env_map, self.current_position, self.goal_position, self.current_cardinal
 
     def find_wall(self):
         """Find the wall and align the robot to it the first time it starts moving."""

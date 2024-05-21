@@ -70,7 +70,7 @@ class RobotDevices:
         camera.enable(self.time_step * 10)
         return camera
     
-    def detect_yellow_block(self, threshold=0.1):
+    def detect_yellow_block(self, threshold=0.4):
         """
         Detect a yellow block in front of the robot using the camera.
 

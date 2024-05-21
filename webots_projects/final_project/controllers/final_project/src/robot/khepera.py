@@ -4,6 +4,7 @@ from src.robot.robot_devices import RobotDevices
 from src.motion.odometry.turn import Turn
 from src.motion.odometry.move import MoveForward
 from src.navigation.wall_follow import WallFollower
+from src.navigation.path_planning import PathPlanning
 
 class Khepera:
     def __init__(self, time_step=32, max_speed=10):
@@ -22,4 +23,13 @@ class Khepera:
 
     def run(self):
         """Run the wall following behavior."""
-        self.wall_follower.follow_wall()
+        env_map, start_position, goal_position, current_cardinal= self.wall_follower.follow_wall()
+
+        start = (start_position[0], start_position[1])
+        goal = (goal_position[0], goal_position[1])
+
+        path_planning = PathPlanning(self.robot, self.devices, self.move_forward, self.turn, env_map)
+        print(f"Start: {start}, Goal: {goal}")
+        print(f"Map: {env_map}")
+        print(f"Path: {path_planning.find_shortest_path(start, goal)}")
+        path_planning.execute(start, goal, current_cardinal)

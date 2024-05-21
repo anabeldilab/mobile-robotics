@@ -117,19 +117,14 @@ def update_map(
     # Process each sensor's value based on current orientation
     for index, (dx, dy, value) in enumerate(sensor_positions[current_orientation]):
         nx, ny = current_position[0] + dx, current_position[1] + dy
-        print(
-            f"Sensor {index} - Current position: {current_position}, New position: {(nx, ny)}, Value: {value}"
-        )
         # env_map_copy[current_position[0]][current_position[1]] = 2
         # Check if the new position is within the map boundaries
         if 0 <= nx < len(env_map) and 0 <= ny < len(env_map[0]):
             # If it's the first iteration (front sensor) and a yellow block is detected, 
             # mark the map
             if index == 0 and front_cam_yellow_block and value >= 200:
-                print(f"Setting yellow block at position {(nx, ny)}")
                 env_map_copy[nx][ny] = 3
             if value >= 200 and env_map_copy[nx][ny] != 3:
-                print(f"Setting wall at position {(nx, ny)}")
                 env_map_copy[nx][ny] = 1
 
     # Set the robot's starting position (consider using a parameter for the map center)
