@@ -132,19 +132,22 @@ class Khepera:
         self.wall_follower.follow_wall()
 
         self.mapping.fill_map()
+
+        if not self.mapping.has_free_space():
+            print("Incomplete map, loading map data...")
+            self.mapping.load_map("src/map/maps/map_data.txt")
+            self.goal_position = self.mapping.find_closest_valid_block()
+            print(f"Closest valid block: {self.goal_position}")
+        else:
+            self.mapping.save_map("src/map/maps/map_data.txt")
+
         start = (self.start_position[0], self.start_position[1])
         goal = self.mapping.display_map()
-        print(f"Goal position: {self.goal_position}")
-        print(f"Display map returned goal: {goal}")
 
         if goal is not None:
             self.goal_position = goal
-        print(f"Updated goal position: {self.goal_position}")
 
         goal = (self.goal_position[0], self.goal_position[1])
-        
-        print(f"Hola Start: {self.start_position}, Goal: {self.goal_position}")
-        print(f"Map: {self.mapping.map_data}")
 
         path = self.path_planning.find_shortest_path(start, goal)
         if path is None:

@@ -10,6 +10,7 @@ Environment mapping for the robot Khepera IV in Webots
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 from collections import deque
 
 class Mapping:
@@ -97,13 +98,59 @@ class Mapping:
         for position in path:
             self.map_data[position[0]][position[1]] = self.PATH
 
-    def save_map(self):
-        # Lógica para guardar el mapa en un archivo
-        pass
+    def save_map(self, filename='src/map/maps/map.pkl'):
+        """
+        Save the current map data to a file using serialization.
 
-    def load_map(self, filename):
-        # Lógica para cargar el mapa desde un archivo
-        pass
+        This method uses the pickle library to serialize the map data structure,
+        which allows the complex data types within the map to be saved accurately.
+        It's especially useful for preserving the state of a simulation or an ongoing
+        robotic task.
+
+        Parameters:
+        - filename: str, optional
+            The name of the file where the map data will be saved. The default filename is 'map.pkl'.
+
+        Returns:
+        None
+        """
+        with open(filename, 'wb') as f:
+            pickle.dump(self.map_data, f)
+        print(f"Map saved to {filename}")
+
+    def load_map(self, filename='src/map/maps/map.pkl'):
+        """
+        Load map data from a file using serialization.
+
+        Attempts to open the specified file and deserialize the map data structure using pickle.
+        If the file does not exist, it calls the create_map method to generate a new map,
+        which is useful for starting with a default map configuration in case of missing files.
+
+        Parameters:
+        - filename: str, optional
+            The name of the file to load the map data from. The default filename is 'map.pkl'.
+
+        Returns:
+        - map_data: list of lists
+            The map data structure loaded from the file or newly created if the file was not found.
+        """
+        try:
+            with open(filename, 'rb') as f:
+                self.map_data = pickle.load(f)
+            print(f"Map loaded from {filename}")
+            # Look for the yellow block and set the closest valid block
+            self.yellow_block_position = None
+            for i, row in enumerate(self.map_data):
+                for j, value in enumerate(row):
+                    if value == self.YELLOW_BLOCK:
+                        self.yellow_block_position = [i, j]
+                        self.closest_valid_block = self.find_closest_valid_block()
+                        break
+            return self.map_data
+        except FileNotFoundError:
+            print("File not found. Creating a new map.")
+            return self.create_map()
+
 
     def fill_map(self):
         """Fill the map with walls using an iterative DFS algorithm.
@@ -200,6 +247,7 @@ class Mapping:
     def find_closest_valid_block(self):
         """Find the closest valid block to the yellow block."""
         if not self.yellow_block_position:
+            print("No yellow block found.")
             return None
 
         rows, cols = len(self.map_data), len(self.map_data[0])
@@ -215,3 +263,7 @@ class Mapping:
                 if 0 <= nx < rows and 0 <= ny < cols and not visited[nx][ny]:
                     queue.append((nx, ny))
         return None
+    
+    def has_free_space(self):
+        """Check if there is free space in the map."""
+        return any(self.FREE_SPACE in row for row in self.map_data)

@@ -41,7 +41,6 @@ class WallFollower:
 
     def start_find_wall(self):
         """Find the wall and align the robot to it the first time it starts moving."""
-        print(f"{self.robot.devices.ir_sensor_list}")
         if self.robot.devices.ir_sensor_list["front infrared sensor"].getValue() >= 190:
             self.robot.turn.execute(direction="right")
         elif self.robot.devices.ir_sensor_list["right infrared sensor"].getValue() >= 190:
