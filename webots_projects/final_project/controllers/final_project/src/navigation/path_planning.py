@@ -1,7 +1,7 @@
 from src.navigation.path_planning_algorithms.dijkstra import dijkstra
 
 class PathPlanning:
-    def __init__(self, robot, devices, move_forward, turn, env_map):
+    def __init__(self, robot):
         """
         Initialize the PathPlanning class.
 
@@ -13,10 +13,6 @@ class PathPlanning:
         - env_map: 2D list representing the map of the environment
         """
         self.robot = robot
-        self.devices = devices
-        self.move_forward = move_forward
-        self.turn = turn
-        self.env_map = env_map
 
     def find_shortest_path(self, start, goal):
         """
@@ -29,7 +25,8 @@ class PathPlanning:
         Returns:
         - path: list of tuples representing the path from start to goal
         """
-        return dijkstra(self.env_map, start, goal)
+        print("Finding shortest path using Dijkstra's algorithm")
+        return dijkstra(self.robot.mapping.map_data, start, goal)
 
     def move_along_path(self, path, current_orientation='N'):
         """
@@ -54,7 +51,8 @@ class PathPlanning:
 
             self.adjust_orientation(current_orientation, target_orientation)
             current_orientation = target_orientation
-            self.move_forward.execute()
+            print("moving forward")
+            self.robot.move_forward.execute()
 
     def adjust_orientation(self, current_orientation, target_orientation):
         """
@@ -67,14 +65,14 @@ class PathPlanning:
         if current_orientation == target_orientation:
             return
         elif (current_orientation, target_orientation) in [('N', 'E'), ('E', 'S'), ('S', 'W'), ('W', 'N')]:
-            self.turn.execute('right')
+            self.robot.turn.execute('right')
             print("right")
         elif (current_orientation, target_orientation) in [('N', 'W'), ('W', 'S'), ('S', 'E'), ('E', 'N')]:
-            self.turn.execute('left')
+            self.robot.turn.execute('left')
             print("left")
         else:
-            self.turn.execute('right')
-            self.turn.execute('right')
+            self.robot.turn.execute('right')
+            self.robot.turn.execute('right')
             print("right right")
 
     def execute(self, start, goal, current_orientation):
@@ -86,5 +84,7 @@ class PathPlanning:
         - goal: tuple (x, y) representing the goal position
         """
         path = self.find_shortest_path(start, goal)
+        self.robot.mapping.update_path(path)
+        self.robot.mapping.display_map()
         self.move_along_path(path, current_orientation)
 

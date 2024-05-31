@@ -20,6 +20,8 @@ class RobotDevices:
         self.camera = self.init_camera()
         self.pos_l, self.pos_r = self.init_position_sensors()
         self.gyro = self.init_gyro()
+        self.robot.step(self.time_step)
+
 
     def init_wheels(self):
         """
@@ -70,7 +72,7 @@ class RobotDevices:
         camera.enable(self.time_step * 10)
         return camera
     
-    def detect_yellow_block(self, threshold=0.4):
+    def detect_yellow_block(self, threshold=0.19): # 0.19
         """
         Detect a yellow block in front of the robot using the camera.
 
@@ -106,6 +108,9 @@ class RobotDevices:
         # Calculate the ratio of yellow pixels to the total number of pixels
         yellow_ratio = non_zero_count / (W * H)
 
+        print(f"Yellow ratio: {yellow_ratio}")
+        print(f"Threshold: {threshold}")
+
         # Return True if the yellow ratio exceeds the threshold
         return yellow_ratio > threshold
 
@@ -120,8 +125,6 @@ class RobotDevices:
         pos_r = self.robot.getDevice("right wheel sensor")
         pos_l.enable(self.time_step)
         pos_r.enable(self.time_step)
-        # Update the position sensors to get the initial position.
-        self.robot.step(self.time_step)
         return pos_l, pos_r
     
 

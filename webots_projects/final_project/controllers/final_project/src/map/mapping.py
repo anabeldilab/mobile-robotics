@@ -10,171 +10,208 @@ Environment mapping for the robot Khepera IV in Webots
 
 import matplotlib.pyplot as plt
 import numpy as np
+from collections import deque
 
-MAP_SIZE = 25
+class Mapping:
+    FREE_SPACE = 0
+    WALL = 1
+    START_POSITION = 2
+    YELLOW_BLOCK = 3
+    PATH = 4
 
-def create_map():
-    """
-    Create an empty map of the environment.
+    def __init__(self, filename=None, map_size=[25, 25]):
+        if filename:
+            self.map_data = self.load_map(filename)
+        else:
+            self.map_size = map_size
+            self.map_data = self.create_map()
+        self.previous_values = {}
+        self.yellow_block_position = None
+        self.closest_valid_block = None
 
-    Returns:
-    - env_map: the map of the environment
-    """
+    def create_map(self):
+        """
+        Create an empty map of the environment.
 
-    # Map the environment with matrix 25x25
-    # 0: free space
-    # 1: wall
-    # 2: start position
+        Returns:
+        - map_data: the map of the environment
+        """
+        map_data = [[0 for _ in range(self.map_size[0])] for _ in range(self.map_size[1])]
+        map_data[int(self.map_size[0] / 2)][int(self.map_size[1] / 2)] = self.START_POSITION
+        return map_data
 
-    env_map = [[0 for _ in range(MAP_SIZE)] for _ in range(MAP_SIZE)]
-    # Set start position
-    env_map[int(MAP_SIZE / 2)][int(MAP_SIZE / 2)] = 2
-    return env_map
+    def update_position(self, x, y, value):
+        """
+        Update the map at a specific position with a given value.
 
+        Parameters:
+        - x: The x coordinate on the map.
+        - y: The y coordinate on the map.
+        - value: The value to set at the specified position.
+        """
+        if 0 <= x < len(self.map_data) and 0 <= y < len(self.map_data[0]):
+            if x == int(self.map_size[0] / 2) and y == int(self.map_size[1] / 2):
+                self.map_data[x][y] = self.START_POSITION
+            else:
+                self.map_data[x][y] = value
 
-def display_map(map_matrix):
-    """
-    Display the map of the environment.
+    def update_wall(self, x, y):
+        """
+        Update the map with a wall at a specific position.
 
-    Parameters:
-    - map_matrix: the map of the environment
-    """
-    map_array = np.array(map_matrix) 
+        Parameters:
+        - x: The x coordinate on the map.
+        - y: The y coordinate on the map.
+        """
+        self.update_position(x, y, self.WALL)
 
-    cmap = plt.cm.viridis
-    norm = plt.Normalize(vmin=map_array.min(), vmax=map_array.max())
+    def update_yellow_block(self, x, y):
+        """
+        Update the map with a yellow block at a specific position.
 
-    fig, ax = plt.subplots()
-    cax = ax.matshow(map_array, cmap=cmap, norm=norm)
-    fig.colorbar(cax)
+        Parameters:
+        - x: The x coordinate on the map.
+        - y: The y coordinate on the map.
+        """
+        self.previous_values[(x, y)] = self.map_data[x][y]
+        self.update_position(x, y, self.YELLOW_BLOCK)
 
-    ax.set_title("Robot Environment Map")
-    plt.xlabel("X coordinate")
-    plt.ylabel("Y coordinate")
-    plt.show()
+    def remove_yellow_block(self, x, y):
+        """
+        Remove the yellow block from the map, restoring the previous value.
 
+        Parameters:
+        - x: The x coordinate on the map.
+        - y: The y coordinate on the map.
+        """
+        if (x, y) in self.previous_values:
+            self.update_position(x, y, self.previous_values.pop((x, y)))
 
-def update_map(
-    env_map,
-    current_position,
-    current_orientation,
-    front_ir,
-    left_ir,
-    right_ir,
-    back_ir,
-    front_cam_yellow_block,
-):
-    """
-    Update the map with the position of the robot and detected walls based on IR sensor values.
+    def update_path(self, path):
+        """
+        Update the map with the shortest path from start to goal.
 
-    Parameters:
-    - env_map: the map of the environment
-    - current_position: the current position of the robot
-    - current_orientation: the current orientation of the robot
-    - front_ir: the front IR sensor
-    - left_ir: the left IR sensor
-    - right_ir: the right IR sensor
+        Parameters:
+        - path: list of tuples representing the path from start to goal
+        """
+        for position in path:
+            self.map_data[position[0]][position[1]] = self.PATH
 
-    Returns:
-    - env_map_copy: the updated map of the environment
-    """
-    # Map sensor values to variables for clarity and efficiency
-    front_value = front_ir.getValue()
-    left_value = left_ir.getValue()
-    right_value = right_ir.getValue()
-    back_value = back_ir.getValue()
+    def save_map(self):
+        # Lógica para guardar el mapa en un archivo
+        pass
 
-    # Define relative positions for sensors based on orientation
-    sensor_positions = {
-        "N": (
-            (-1, 0, front_value),
-            (0, -1, left_value),
-            (0, 1, right_value),
-            (1, 0, back_value),
-        ),
-        "E": (
-            (0, 1, front_value),
-            (-1, 0, left_value),
-            (1, 0, right_value),
-            (0, -1, back_value),
-        ),
-        "S": (
-            (1, 0, front_value),
-            (0, 1, left_value),
-            (0, -1, right_value),
-            (-1, 0, back_value),
-        ),
-        "W": (
-            (0, -1, front_value),
-            (1, 0, left_value),
-            (-1, 0, right_value),
-            (0, 1, back_value),
-        ),
-    }
+    def load_map(self, filename):
+        # Lógica para cargar el mapa desde un archivo
+        pass
 
-    env_map_copy = env_map.copy()
+    def fill_map(self):
+        """Fill the map with walls using an iterative DFS algorithm.
+        Parameters:
+        - matrix: the map of the environment
 
-    # Process each sensor's value based on current orientation
-    for index, (dx, dy, value) in enumerate(sensor_positions[current_orientation]):
-        nx, ny = current_position[0] + dx, current_position[1] + dy
-        # env_map_copy[current_position[0]][current_position[1]] = 2
-        # Check if the new position is within the map boundaries
-        if 0 <= nx < len(env_map) and 0 <= ny < len(env_map[0]):
-            # If it's the first iteration (front sensor) and a yellow block is detected, 
-            # mark the map
-            if index == 0 and front_cam_yellow_block and value >= 200:
-                env_map_copy[nx][ny] = 3
-            if value >= 200 and env_map_copy[nx][ny] != 3:
-                env_map_copy[nx][ny] = 1
+        Returns:
+        - matrix: the updated map of the environment
+        """
+        rows, cols = len(self.map_data), len(self.map_data[0])
 
-    # Set the robot's starting position (consider using a parameter for the map center)
-    map_center = (len(env_map) // 2, len(env_map[0]) // 2)
-    env_map_copy[map_center[0]][map_center[1]] = 2
+        # Function to perform the DFS iteratively
+        def dfs(x, y):
+            stack = [(x, y)]
+            while stack:
+                cx, cy = stack.pop()
+                if (
+                    cx < 0
+                    or cx >= rows
+                    or cy < 0
+                    or cy >= cols
+                    or self.map_data[cx][cy] == self.WALL
+                    or self.map_data[cx][cy] == self.YELLOW_BLOCK
+                ):
+                    continue
+                self.map_data[cx][cy] = self.WALL
+                # Push adjacent cells onto the stack
+                stack.append((cx + 1, cy))
+                stack.append((cx - 1, cy))
+                stack.append((cx, cy + 1))
+                stack.append((cx, cy - 1))
 
-    return env_map_copy
+        # Call DFS from the edges of the matrix
+        for i in range(rows):
+            if self.map_data[i][0] == 0:
+                dfs(i, 0)
+            if self.map_data[i][cols - 1] == 0:
+                dfs(i, cols - 1)
+        for j in range(cols):
+            if self.map_data[0][j] == 0:
+                dfs(0, j)
+            if self.map_data[rows - 1][j] == 0:
+                dfs(rows - 1, j)
 
+        return self.map_data
 
-def fill_map(matrix):
-    """Fill the map with walls using an iterative DFS algorithm.
-    Parameters:
-    - matrix: the map of the environment
+    def display_map(self):
+        map_array = np.array(self.map_data)
 
-    Returns:
-    - matrix: the updated map of the environment
-    """
-    rows, cols = len(matrix), len(matrix[0])
+        cmap = plt.cm.viridis
+        norm = plt.Normalize(vmin=map_array.min(), vmax=map_array.max())
 
-    # Function to perform the DFS iteratively
-    def dfs(x, y):
-        stack = [(x, y)]
-        while stack:
-            cx, cy = stack.pop()
-            if (
-                cx < 0
-                or cx >= rows
-                or cy < 0
-                or cy >= cols
-                or matrix[cx][cy] == 1
-                or matrix[cx][cy] == 3
-            ):
-                continue
-            matrix[cx][cy] = 1  # Mark as visited and change to 1
-            # Push adjacent cells onto the stack
-            stack.append((cx + 1, cy))
-            stack.append((cx - 1, cy))
-            stack.append((cx, cy + 1))
-            stack.append((cx, cy - 1))
+        fig, ax = plt.subplots()
+        cax = ax.matshow(map_array, cmap=cmap, norm=norm)
+        fig.colorbar(cax)
 
-    # Call DFS from the edges of the matrix
-    for i in range(rows):
-        if matrix[i][0] == 0:
-            dfs(i, 0)
-        if matrix[i][cols - 1] == 0:
-            dfs(i, cols - 1)
-    for j in range(cols):
-        if matrix[0][j] == 0:
-            dfs(0, j)
-        if matrix[rows - 1][j] == 0:
-            dfs(rows - 1, j)
+        ax.set_title("Robot Environment Map")
+        plt.xlabel("X coordinate")
+        plt.ylabel("Y coordinate")
 
-    return matrix
+        yellow_block_present = any(self.YELLOW_BLOCK in row for row in self.map_data)
+        if not yellow_block_present:
+            print("No yellow block found, enabling manual addition.")
+            self.add_yellow_block_manually(fig, ax, cax)
+            plt.show()
+            return self.closest_valid_block
+        else:
+            plt.show()
+            return None
+
+    def add_yellow_block_manually(self, fig, ax, cax):
+        print("Setting up event handler for manual yellow block addition.")
+
+        def onclick(event):
+            if event.xdata is not None and event.ydata is not None:
+                x = int(event.ydata)
+                y = int(event.xdata)
+                print(f"Click event: button={event.button}, x={x}, y={y}")
+                if event.button == 1:
+                    if self.yellow_block_position:
+                        last_x, last_y = self.yellow_block_position
+                        self.remove_yellow_block(x=last_x, y=last_y)
+                    self.update_yellow_block(x=x, y=y)
+                    self.yellow_block_position = [x, y]
+                    self.closest_valid_block = self.find_closest_valid_block()
+                    print("Closest valid block:", self.closest_valid_block)
+                cax.set_data(np.array(self.map_data))
+                plt.draw()
+
+        fig.canvas.mpl_connect('button_press_event', onclick)
+        print("On click return:", self.closest_valid_block)
+        ax.text(0.5, -0.1, "No goal found\nLeft click to set a YELLOW_BLOCK", ha='center', va='center', transform=ax.transAxes, color='red')
+
+    def find_closest_valid_block(self):
+        """Find the closest valid block to the yellow block."""
+        if not self.yellow_block_position:
+            return None
+
+        rows, cols = len(self.map_data), len(self.map_data[0])
+        visited = [[False for _ in range(cols)] for _ in range(rows)]
+        queue = deque([self.yellow_block_position])
+        while queue:
+            x, y = queue.popleft()
+            if self.map_data[x][y] == self.FREE_SPACE:
+                return [x, y]
+            visited[x][y] = True
+            for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < rows and 0 <= ny < cols and not visited[nx][ny]:
+                    queue.append((nx, ny))
+        return None
