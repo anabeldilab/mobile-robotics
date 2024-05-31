@@ -41,4 +41,8 @@ def dijkstra(env_map, start, goal):
         step = came_from.get(step)
     path.reverse()
 
+    if not path or path[0] != start:
+        print("Path not found or goal not reached.")
+        return []
+
     return path
