@@ -15,7 +15,7 @@ class Turn:
         self.robot = robot
         self.pid = PID(1.5, 0.001)
 
-    def execute(self, direction="left"):
+    def execute(self, direction="left", angle=90):
         """
         Rotate the robot 90 degrees to the left or right.
 
@@ -23,7 +23,7 @@ class Turn:
         - direction: Direction of the rotation (left or right).
         - speed: Wheel speed during the rotation.
         """
-        target_angle = math.radians(90)
+        target_angle = math.radians(angle)
         current_orientation = 0
         # delta = target_angle * self.robot.devices.WHEEL_BASE / self.robot.devices.WHEEL_RADIUS
 
@@ -45,7 +45,7 @@ class Turn:
                 break
 
         self.robot.current_cardinal = Orientation.get_target_orientation(
-            self.robot.current_cardinal, direction
+            self.robot.current_cardinal, direction, angle
         )
 
         self.robot.devices.left_wheel.setVelocity(0)

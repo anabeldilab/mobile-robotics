@@ -1,9 +1,13 @@
 class Orientation:
     ORIENTATIONS = {
         "N": 0,
+        "NW": 45,
         "W": 90,
+        "SW": 135,
         "S": 180,
+        "SE": 225,
         "E": 270,
+        "NE": 315,
     }
 
     @staticmethod
@@ -12,7 +16,7 @@ class Orientation:
         Get the orientation in degrees from the cardinal direction.
 
         Parameters:
-        - cardinal: The cardinal direction ('N', 'E', 'S', 'W').
+        - cardinal: The cardinal direction ('N', 'NW', 'W', 'SW', 'S', 'SE', 'E', 'NE').
 
         Returns:
         - int: The orientation in degrees.
@@ -28,7 +32,7 @@ class Orientation:
         - orientation: The orientation in degrees.
 
         Returns:
-        - str: The cardinal direction ('N', 'E', 'S', 'W').
+        - str: The cardinal direction ('N', 'NW', 'W', 'SW', 'S', 'SE', 'E', 'NE').
         """
         for cardinal, angle in Orientation.ORIENTATIONS.items():
             if angle == orientation:
@@ -36,9 +40,9 @@ class Orientation:
         return None
 
     @staticmethod
-    def get_target_orientation(current_cardinal, direction):
+    def get_target_orientation(current_cardinal, direction = "left", angle = 90):
         """
-        Get the target orientation after turning 90 degrees.
+        Get the target cardinal direction after a turn.
 
         Parameters:
         - current_cardinal: The current cardinal direction.
@@ -47,10 +51,16 @@ class Orientation:
         Returns:
         - str: The target cardinal direction.
         """
-        turn_mapping = {
-            "N": {"left": "W", "right": "E"},
-            "E": {"left": "N", "right": "S"},
-            "S": {"left": "E", "right": "W"},
-            "W": {"left": "S", "right": "N"},
-        }
-        return turn_mapping[current_cardinal][direction]
+        current_orientation = Orientation.get_orientation_from_cardinal(current_cardinal)
+        print(f"current_orientation: {current_orientation}, current_cardinal: {current_cardinal}")
+        if direction == "left":
+            target_orientation = current_orientation + angle
+        else:
+            target_orientation = current_orientation - angle
+
+        target_orientation = target_orientation % 360
+
+        print(f"target_orientation: {target_orientation}, target_cardinal: {Orientation.get_cardinal_from_orientation(target_orientation)}")
+        
+        return Orientation.get_cardinal_from_orientation(target_orientation)
+    

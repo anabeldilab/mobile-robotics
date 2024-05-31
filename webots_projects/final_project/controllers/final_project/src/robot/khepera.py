@@ -113,16 +113,28 @@ class Khepera:
             or len(self.current_position) != 2
         ):
             raise ValueError("current_position must be a list of two integers")
-        if self.current_cardinal not in ("N", "E", "S", "W"):
-            raise ValueError("Invalid current_cardinal. Must be 'N', 'E', 'S', or 'W'.")
+        if self.current_cardinal not in ("N", "NE", "E", "SE", "S", "SW", "W", "NW"):
+            raise ValueError("Invalid current_cardinal. Must be one of: N, NE, E, SE, S, SW, W, NW")
 
         if self.current_cardinal == "N":
             self.current_position[0] -= 1
+        elif self.current_cardinal == "NE":
+            self.current_position[0] -= 1
+            self.current_position[1] += 1
         elif self.current_cardinal == "E":
+            self.current_position[1] += 1
+        elif self.current_cardinal == "SE":
+            self.current_position[0] += 1
             self.current_position[1] += 1
         elif self.current_cardinal == "S":
             self.current_position[0] += 1
+        elif self.current_cardinal == "SW":
+            self.current_position[0] += 1
+            self.current_position[1] -= 1
         elif self.current_cardinal == "W":
+            self.current_position[1] -= 1
+        elif self.current_cardinal == "NW":
+            self.current_position[0] -= 1
             self.current_position[1] -= 1
 
         return self.current_position
