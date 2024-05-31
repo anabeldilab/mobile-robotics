@@ -1,7 +1,7 @@
 from src.motion.supervisor.orientation import Orientation
 
 class Turn:
-    def __init__(self, robot, devices):
+    def __init__(self, robot):
         """
         Initialize the Turn class.
 
@@ -10,9 +10,8 @@ class Turn:
         - devices: Instance of RobotDevices containing the robot's devices.
         """
         self.robot = robot
-        self.devices = devices
 
-    def execute(self, direction="left", speed=10):
+    def execute(self, direction="left", speed=2):
         """
         Rotate the robot a specified number of degrees.
 
@@ -20,17 +19,17 @@ class Turn:
         - direction: Direction of the rotation (left or right).
         - speed: Speed of the wheels during rotation.
         """
-        khepera_node = self.robot.getFromDef("Khepera")
+        khepera_node = self.robot.robot.getFromDef("Khepera")
         target_orientation = Orientation.get_target_orientation(khepera_node, direction)
 
         if direction == "left":
-            self.devices.left_wheel.setVelocity(-speed)
-            self.devices.right_wheel.setVelocity(speed)
+            self.robot.devices.left_wheel.setVelocity(-speed)
+            self.robot.devices.right_wheel.setVelocity(speed)
         else:
-            self.devices.left_wheel.setVelocity(speed)
-            self.devices.right_wheel.setVelocity(-speed)
+            self.robot.devices.left_wheel.setVelocity(speed)
+            self.robot.devices.right_wheel.setVelocity(-speed)
 
-        while self.robot.step(self.devices.time_step) != -1:
+        while self.robot.step() != -1:
             current_orientation = khepera_node.getOrientation()
             current_orientation = [
                 [round(current_orientation[0], 2), round(current_orientation[1], 2)],
@@ -39,8 +38,10 @@ class Turn:
             if self.turn_tolerance(current_orientation, target_orientation, 0.01):
                 break
 
-        self.devices.left_wheel.setVelocity(0)
-        self.devices.right_wheel.setVelocity(0)
+        self.robot.current_orientation = Orientation.get_orientation(khepera_node)
+
+        self.robot.devices.left_wheel.setVelocity(0)
+        self.robot.devices.right_wheel.setVelocity(0)
 
     @staticmethod
     def turn_tolerance(current, target, tolerance):

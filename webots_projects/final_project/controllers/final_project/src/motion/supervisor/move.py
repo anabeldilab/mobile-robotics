@@ -1,7 +1,7 @@
 """Move forward and backward functions for the Khepera robot."""
 
 class MoveForward:
-    def __init__(self, robot, devices):
+    def __init__(self, robot):
         """
         Initialize the MoveForward class.
 
@@ -10,9 +10,8 @@ class MoveForward:
         - devices: Instance of RobotDevices containing the robot's devices.
         """
         self.robot = robot
-        self.devices = devices
 
-    def execute(self, distance, speed=10.0):
+    def execute(self, distance=0.25, speed=10.0):
         """
         Move the robot forward a specific distance using closed-loop control.
 
@@ -24,7 +23,7 @@ class MoveForward:
         - True if the target distance is reached without obstacles blocking the path.
         - False if an obstacle prevents reaching the target distance.
         """
-        khepera_node = self.robot.getFromDef("Khepera")
+        khepera_node = self.robot.robot.getFromDef("Khepera")
         if not khepera_node:
             print("Error: Khepera robot definition not found.")
             return False
@@ -34,10 +33,10 @@ class MoveForward:
             print("Error: Could not get the initial position.")
             return False
 
-        self.devices.left_wheel.setVelocity(speed)
-        self.devices.right_wheel.setVelocity(speed)
+        self.robot.devices.left_wheel.setVelocity(speed)
+        self.robot.devices.right_wheel.setVelocity(speed)
 
-        while self.robot.step(self.devices.time_step) != -1:
+        while self.robot.step() != -1:
             current_position = khepera_node.getPosition()
             if any(
                 abs(current_position[i] - initial_position[i]) >= distance - 0.01
@@ -45,14 +44,14 @@ class MoveForward:
             ):
                 break
 
-            if self.devices.ir_sensor_list["front infrared sensor"].getValue() >= 250:
+            if self.robot.devices.ir_sensor_list["front infrared sensor"].getValue() >= 250:
                 if any(
                     abs(current_position[i] - initial_position[i]) >= 0.75 * distance
                     for i in [0, 1]
                 ):
                     break
                 return False
-
-        self.devices.left_wheel.setVelocity(0)
-        self.devices.right_wheel.setVelocity(0)
+        
+        self.robot.devices.left_wheel.setVelocity(0)
+        self.robot.devices.right_wheel.setVelocity(0)
         return True
