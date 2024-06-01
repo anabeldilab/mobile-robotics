@@ -26,18 +26,14 @@ class WallFollower:
             elif sensor_readings["left"] <= 160:
                 self.robot.turn.execute(direction="left")
                 self.robot.update_map()
-                if self.robot.move_forward.execute(0.25):
-                    self.robot.current_position = self.robot.change_position()
+                self.robot.move_forward.execute(0.25)
             else:
-                if self.robot.move_forward.execute(0.25):
-                    self.robot.current_position = self.robot.change_position()
+                self.robot.move_forward.execute(0.25)
             print(f"current_position: {self.robot.current_position}")
             print(f"start_position: {self.robot.start_position}")
             if self.robot.current_position == self.robot.start_position:
                 print("Start position reached.")
                 break
-
-            print(f"goal_position: {self.robot.goal_position}")
 
     def start_find_wall(self):
         """Find the wall and align the robot to it the first time it starts moving."""

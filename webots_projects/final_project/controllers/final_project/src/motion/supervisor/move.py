@@ -54,4 +54,5 @@ class MoveForward:
         
         self.robot.devices.left_wheel.setVelocity(0)
         self.robot.devices.right_wheel.setVelocity(0)
+        self.robot.current_position = self.robot.change_position()
         return True
