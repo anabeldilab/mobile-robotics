@@ -13,6 +13,7 @@ import numpy as np
 import pickle
 from collections import deque
 
+
 class Mapping:
     FREE_SPACE = 0
     WALL = 1
@@ -20,26 +21,47 @@ class Mapping:
     YELLOW_BLOCK = 3
     PATH = 4
 
-    def __init__(self, filename=None, map_size=[25, 25]):
+    def __init__(self, filename=None, size=[25, 25]):
         if filename:
-            self.map_data = self.load_map(filename)
+            self.data = self.load_map(filename)
         else:
-            self.map_size = map_size
-            self.map_data = self.create_map()
+            self.size = size
+            self.data = self.create_map()
         self.previous_values = {}
         self.yellow_block_position = None
-        self.closest_valid_block = None
+
+    def is_transitable(self, x, y):
+        """
+        Check if a given position is transitable.
+
+        Parameters:
+        - x: The x coordinate on the map.
+        - y: The y coordinate on the map.
+
+        Returns:
+        - bool: True if the position is transitable, False otherwise.
+        """
+        return (
+            0 <= x < len(self.data)
+            and 0 <= y < len(self.data[0])
+            and self.data[x][y] != self.WALL
+            and self.data[x][y] != self.YELLOW_BLOCK
+        )
 
     def create_map(self):
         """
         Create an empty map of the environment.
 
         Returns:
-        - map_data: the map of the environment
+        - data: the map of the environment
         """
-        map_data = [[0 for _ in range(self.map_size[0])] for _ in range(self.map_size[1])]
-        map_data[int(self.map_size[0] / 2)][int(self.map_size[1] / 2)] = self.START_POSITION
-        return map_data
+        data = [
+            [0 for _ in range(self.size[0])] for _ in range(self.size[1])
+        ]
+        data[int(self.size[0] / 2)][
+            int(self.size[1] / 2)
+        ] = self.START_POSITION
+        return data
 
     def update_position(self, x, y, value):
         """
@@ -50,11 +72,11 @@ class Mapping:
         - y: The y coordinate on the map.
         - value: The value to set at the specified position.
         """
-        if 0 <= x < len(self.map_data) and 0 <= y < len(self.map_data[0]):
-            if x == int(self.map_size[0] / 2) and y == int(self.map_size[1] / 2):
-                self.map_data[x][y] = self.START_POSITION
+        if 0 <= x < len(self.data) and 0 <= y < len(self.data[0]):
+            if x == int(self.size[0] / 2) and y == int(self.size[1] / 2):
+                self.data[x][y] = self.START_POSITION
             else:
-                self.map_data[x][y] = value
+                self.data[x][y] = value
 
     def update_wall(self, x, y):
         """
@@ -74,7 +96,7 @@ class Mapping:
         - x: The x coordinate on the map.
         - y: The y coordinate on the map.
         """
-        self.previous_values[(x, y)] = self.map_data[x][y]
+        self.previous_values[(x, y)] = self.data[x][y]
         self.update_position(x, y, self.YELLOW_BLOCK)
 
     def remove_yellow_block(self, x, y):
@@ -88,6 +110,15 @@ class Mapping:
         if (x, y) in self.previous_values:
             self.update_position(x, y, self.previous_values.pop((x, y)))
 
+    def remove_previous_path(self):
+        """
+        Remove the previous path from the map.
+        """
+        for i, row in enumerate(self.data):
+            for j, value in enumerate(row):
+                if value == self.PATH and self.data[i][j] != self.START_POSITION:
+                    self.data[i][j] = self.FREE_SPACE
+
     def update_path(self, path):
         """
         Update the map with the shortest path from start to goal.
@@ -95,10 +126,12 @@ class Mapping:
         Parameters:
         - path: list of tuples representing the path from start to goal
         """
+        self.remove_previous_path()
         for position in path:
-            self.map_data[position[0]][position[1]] = self.PATH
+            if self.data[position[0]][position[1]] != self.START_POSITION:
+                self.data[position[0]][position[1]] = self.PATH
 
-    def save_map(self, filename='src/map/maps/map.pkl'):
+    def save_map(self, filename="src/map/maps/map.pkl"):
         """
         Save the current map data to a file using serialization.
 
@@ -114,11 +147,11 @@ class Mapping:
         Returns:
         None
         """
-        with open(filename, 'wb') as f:
-            pickle.dump(self.map_data, f)
+        with open(filename, "wb") as f:
+            pickle.dump(self.data, f)
         print(f"Map saved to {filename}")
 
-    def load_map(self, filename='src/map/maps/map.pkl'):
+    def load_map(self, filename="src/map/maps/map.pkl"):
         """
         Load map data from a file using serialization.
 
@@ -131,26 +164,24 @@ class Mapping:
             The name of the file to load the map data from. The default filename is 'map.pkl'.
 
         Returns:
-        - map_data: list of lists
+        - data: list of lists
             The map data structure loaded from the file or newly created if the file was not found.
         """
         try:
-            with open(filename, 'rb') as f:
-                self.map_data = pickle.load(f)
+            with open(filename, "rb") as f:
+                self.data = pickle.load(f)
             print(f"Map loaded from {filename}")
             # Look for the yellow block and set the closest valid block
             self.yellow_block_position = None
-            for i, row in enumerate(self.map_data):
+            for i, row in enumerate(self.data):
                 for j, value in enumerate(row):
                     if value == self.YELLOW_BLOCK:
                         self.yellow_block_position = [i, j]
-                        self.closest_valid_block = self.find_closest_valid_block()
                         break
-            return self.map_data
+            return self.data
         except FileNotFoundError:
             print("File not found. Creating a new map.")
             return self.create_map()
-
 
     def fill_map(self):
         """Fill the map with walls using an iterative DFS algorithm.
@@ -160,7 +191,7 @@ class Mapping:
         Returns:
         - matrix: the updated map of the environment
         """
-        rows, cols = len(self.map_data), len(self.map_data[0])
+        rows, cols = len(self.data), len(self.data[0])
 
         # Function to perform the DFS iteratively
         def dfs(x, y):
@@ -172,11 +203,11 @@ class Mapping:
                     or cx >= rows
                     or cy < 0
                     or cy >= cols
-                    or self.map_data[cx][cy] == self.WALL
-                    or self.map_data[cx][cy] == self.YELLOW_BLOCK
+                    or self.data[cx][cy] == self.WALL
+                    or self.data[cx][cy] == self.YELLOW_BLOCK
                 ):
                     continue
-                self.map_data[cx][cy] = self.WALL
+                self.data[cx][cy] = self.WALL
                 # Push adjacent cells onto the stack
                 stack.append((cx + 1, cy))
                 stack.append((cx - 1, cy))
@@ -185,20 +216,20 @@ class Mapping:
 
         # Call DFS from the edges of the matrix
         for i in range(rows):
-            if self.map_data[i][0] == 0:
+            if self.data[i][0] == 0:
                 dfs(i, 0)
-            if self.map_data[i][cols - 1] == 0:
+            if self.data[i][cols - 1] == 0:
                 dfs(i, cols - 1)
         for j in range(cols):
-            if self.map_data[0][j] == 0:
+            if self.data[0][j] == 0:
                 dfs(0, j)
-            if self.map_data[rows - 1][j] == 0:
+            if self.data[rows - 1][j] == 0:
                 dfs(rows - 1, j)
 
-        return self.map_data
+        return self.data
 
     def display_map(self):
-        map_array = np.array(self.map_data)
+        map_array = np.array(self.data)
 
         cmap = plt.cm.viridis
         norm = plt.Normalize(vmin=map_array.min(), vmax=map_array.max())
@@ -211,12 +242,12 @@ class Mapping:
         plt.xlabel("X coordinate")
         plt.ylabel("Y coordinate")
 
-        yellow_block_present = any(self.YELLOW_BLOCK in row for row in self.map_data)
+        yellow_block_present = any(self.YELLOW_BLOCK in row for row in self.data)
         if not yellow_block_present:
             print("No yellow block found, enabling manual addition.")
             self.add_yellow_block_manually(fig, ax, cax)
             plt.show()
-            return self.closest_valid_block
+            return self.yellow_block_position
         else:
             plt.show()
             return None
@@ -235,35 +266,20 @@ class Mapping:
                         self.remove_yellow_block(x=last_x, y=last_y)
                     self.update_yellow_block(x=x, y=y)
                     self.yellow_block_position = [x, y]
-                    self.closest_valid_block = self.find_closest_valid_block()
-                    print("Closest valid block:", self.closest_valid_block)
-                cax.set_data(np.array(self.map_data))
+                cax.set_data(np.array(self.data))
                 plt.draw()
 
-        fig.canvas.mpl_connect('button_press_event', onclick)
-        print("On click return:", self.closest_valid_block)
-        ax.text(0.5, -0.1, "No goal found\nLeft click to set a YELLOW_BLOCK", ha='center', va='center', transform=ax.transAxes, color='red')
+        fig.canvas.mpl_connect("button_press_event", onclick)
+        ax.text(
+            0.5,
+            -0.1,
+            "No goal found\nLeft click to set a YELLOW_BLOCK",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+            color="red",
+        )
 
-    def find_closest_valid_block(self):
-        """Find the closest valid block to the yellow block."""
-        if not self.yellow_block_position:
-            print("No yellow block found.")
-            return None
-
-        rows, cols = len(self.map_data), len(self.map_data[0])
-        visited = [[False for _ in range(cols)] for _ in range(rows)]
-        queue = deque([self.yellow_block_position])
-        while queue:
-            x, y = queue.popleft()
-            if self.map_data[x][y] == self.FREE_SPACE:
-                return [x, y]
-            visited[x][y] = True
-            for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < rows and 0 <= ny < cols and not visited[nx][ny]:
-                    queue.append((nx, ny))
-        return None
-    
     def has_free_space(self):
         """Check if there is free space in the map."""
-        return any(self.FREE_SPACE in row for row in self.map_data)
+        return any(self.FREE_SPACE in row for row in self.data)
