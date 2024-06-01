@@ -11,7 +11,7 @@ class Turn:
         """
         self.robot = robot
 
-    def execute(self, direction="left", speed=2):
+    def execute(self, direction="left", angle=90, speed=2):
         """
         Rotate the robot a specified number of degrees.
 
@@ -36,7 +36,13 @@ class Turn:
                 [round(current_orientation[3], 2), round(current_orientation[4], 2)],
             ]
             if self.turn_tolerance(current_orientation, target_orientation, 0.01):
-                break
+                if angle == 90:
+                    break
+                elif angle == 180:
+                    self.robot.devices.left_wheel.setVelocity(0)
+                    self.robot.devices.right_wheel.setVelocity(0)
+                    self.execute(direction, 90, speed)
+                    break
 
         self.robot.current_orientation = Orientation.get_orientation(khepera_node)
 

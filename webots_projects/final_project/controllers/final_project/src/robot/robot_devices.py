@@ -127,7 +127,6 @@ class RobotDevices:
         pos_r.enable(self.time_step)
         return pos_l, pos_r
     
-
     def init_gyro(self):
         """
         Initialize and enable the gyro sensor.

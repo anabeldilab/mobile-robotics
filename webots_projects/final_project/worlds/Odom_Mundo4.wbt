@@ -3,7 +3,6 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/apartment_structure/protos/Wall.proto"
 
 WorldInfo {
   info [
@@ -11,8 +10,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.5734625954037321 0.5734626281632305 0.5850480884277257 2.082891741871031
-  position -0.032816295716938323 -0.13927599740976887 7.910633120552822
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position -1.3017128095890254 -0.09854699627927781 10.069342945605433
 }
 TexturedBackground {
 }
@@ -21,37 +20,8 @@ TexturedBackgroundLight {
 RectangleArena {
   floorSize 3 3
 }
-Wall {
-  translation -1.375 1 0
-  size 0.25 1 0.1
-}
-Wall {
-  translation -1.375 -1 0
-  name "wall(8)"
-  size 0.25 1 0.1
-}
-Wall {
-  translation 1.375 -1 0
-  name "wall(12)"
-  size 0.25 1 0.1
-}
-Wall {
-  translation -1.125 1.125 0
-  name "wall(5)"
-  size 0.25 0.75 0.1
-}
-Wall {
-  translation -1.125 -1.125 0
-  name "wall(9)"
-  size 0.25 0.75 0.1
-}
-Wall {
-  translation 1.125 -1.125 0
-  name "wall(13)"
-  size 0.25 0.75 0.1
-}
 Solid {
-  translation 1.375 -0.375 0
+  translation 1.375 -1.365 0
   children [
     Solid {
       translation 0 0 0.05
@@ -86,65 +56,14 @@ Solid {
     1 1 0
   ]
 }
-Wall {
-  translation -0.626 1.375 0
-  name "wall(1)"
-  size 0.25 0.25 0.1
-}
-Wall {
-  translation -0.626 -1.375 0
-  name "wall(11)"
-  size 0.25 0.25 0.1
-}
-Wall {
-  translation 0.625 -1.375 0
-  name "wall(15)"
-  size 0.25 0.25 0.1
-}
-Wall {
-  translation 0.625 1.375 0
-  name "wall(7)"
-  size 0.25 0.25 0.1
-}
-Wall {
-  translation 1.375 1 0
-  name "wall(2)"
-  size 0.25 1 0.1
-}
-Wall {
-  translation -0.876 1.25 0
-  name "wall(3)"
-  size 0.25 0.5 0.1
-}
-Wall {
-  translation -0.876 -1.25 0
-  name "wall(10)"
-  size 0.25 0.5 0.1
-}
-Wall {
-  translation 0.875 -1.25 0
-  name "wall(14)"
-  size 0.25 0.5 0.1
-}
-Wall {
-  translation 0.875 1.25 0
-  name "wall(6)"
-  size 0.25 0.5 0.1
-}
-Wall {
-  translation 1.125 1.125 0
-  name "wall(4)"
-  size 0.25 0.75 0.1
-}
 Robot {
-  translation -1.37726 -0.11999999999999929 -0.00016052538194914756
-  rotation -1.3103380690186094e-06 -6.66435915285518e-10 0.9999999999991415 0.0006553071795870136
+  translation -1.38081 1.37625 -0.000160491
+  rotation 0 0 -1 0
   children [
     Group {
     }
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 221.80852851515306
         axis 0 1 0
         anchor 0 0.0527 0.021
       }
@@ -161,7 +80,7 @@ Robot {
       ]
       endPoint DEF LEFT_WHEEL Solid {
         translation 0 0.0527 0.021
-        rotation 0.1603006218315297 -0.16030068888556326 0.9739647836463281 4.686011956514118
+        rotation 0.5773502693791269 -0.5773502693791233 -0.577350268810627 2.094395000568562
         children [
           DEF WHEEL Pose {
             rotation 0.5773489358556708 -0.5773509358554485 0.5773509358554485 -2.094397
@@ -186,13 +105,10 @@ Robot {
           density -1
           mass 0.01
         }
-        linearVelocity 3.084316269115502e-14 -6.440432703187429e-17 2.315631291161064e-08
-        angularVelocity 1.3473597733484505e-14 1.509488812527633e-12 -6.024914237961318e-14
       }
     }
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 311.01253583978155
         axis 0 1 0
         anchor 0 -0.0527 0.021
       }
@@ -209,15 +125,13 @@ Robot {
       ]
       endPoint DEF RIGHT_WHEEL Solid {
         translation 0 -0.0527 0.021
-        rotation 0.5763591142203756 -0.5763591825408027 0.5793274239633419 4.1917533981518975
+        rotation 0.5773502691713194 -0.5773502691713251 -0.5773502692262327 2.0943949999450786
         children [
           USE WHEEL
         ]
         name "right wheel"
         boundingObject USE WHEEL
         physics USE PHYSICS_WHEELS
-        linearVelocity 1.5842464314154582e-14 -5.619338740689928e-16 2.3156299056025206e-08
-        angularVelocity 3.1681005225385285e-14 6.57049770108504e-13 -6.209955639812921e-14
       }
     }
     DEF GREY_CYLINDER_MESHES Pose {
@@ -1068,6 +982,4 @@ Robot {
     mass 0.566
   }
   controller "final_project"
-  linearVelocity 3.180698349184643e-14 -5.932494516858062e-16 -6.094419621975529e-12
-  angularVelocity 2.6524956670483113e-14 1.2245375095089542e-12 -6.087991943440462e-14
 }

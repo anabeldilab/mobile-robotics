@@ -22,14 +22,13 @@ class KheperaSupervisor:
         self.devices = RobotDevices(time_step, self.robot)
         self.move_forward = MoveForward(self)
         self.turn = Turn(self)
-        self.mapping = Mapping(map_size=[map_width, map_height])
+        self.mapping = Mapping(size=[map_width, map_height])
         self.wall_follower = WallFollower(self)
         self.path_planning = PathPlanning(self)
 
         self.start_position = [int(map_height / 2), int(map_width / 2)]
         self.current_position = self.start_position.copy()
         self.current_orientation = Orientation.get_orientation(self.robot_node)
-        self.goal_position = None
         self.yellow_block = None
 
     def step(self):
@@ -100,7 +99,6 @@ class KheperaSupervisor:
             front_dx, front_dy = sensor_positions[self.current_orientation]['front']
             nx, ny = self.current_position[0] + front_dx, self.current_position[1] + front_dy
             self.yellow_block = [nx, ny]
-            self.goal_position = self.current_position.copy()
             self.mapping.update_yellow_block(nx, ny)
 
     def change_position(self):
@@ -138,27 +136,24 @@ class KheperaSupervisor:
         self.wall_follower.follow_wall()
 
         self.mapping.fill_map()
+
+        if not self.mapping.has_free_space():
+            print("Incomplete map, loading map data...")
+            self.mapping.load_map("src/map/maps/map_data.txt")
+        else:
+            self.mapping.save_map("src/map/maps/map_data.txt")
+
         start = (self.start_position[0], self.start_position[1])
         goal = self.mapping.display_map()
-        print(f"Goal position: {self.goal_position}")
-        print(f"Display map returned goal: {goal}")
-
         if goal is not None:
-            self.goal_position = goal
-        print(f"Updated goal position: {self.goal_position}")
+            self.yellow_block = goal
 
-        goal = (self.goal_position[0], self.goal_position[1])
-        
-        print(f"Hola Start: {self.start_position}, Goal: {self.goal_position}")
-        print(f"Map: {self.mapping.map_data}")
+        goal = (self.yellow_block[0], self.yellow_block[1])
 
-        path = self.path_planning.find_shortest_path(start, goal)
-        if path is None:
-            print(f"Path not found from {start} to {goal}")
-        else:
-            print(f"Path found: {path}")
+        self.path_planning.execute(start, goal, self.current_orientation, neighbor_type="4-way")
 
-        if path is not None:
-            self.path_planning.execute(start, goal, self.current_orientation)
-        else:
-            print("No valid path found!")
+        start = (self.current_position[0], self.current_position[1])
+        print(f"Start position must be current position: {start}")
+        goal = (self.start_position[0], self.start_position[1])
+
+        self.path_planning.execute(start, goal, self.current_orientation, neighbor_type="4-way")

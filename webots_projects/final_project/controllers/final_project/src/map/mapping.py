@@ -8,11 +8,9 @@ Author: Anabel Díaz Labrador
 Environment mapping for the robot Khepera IV in Webots
 """
 
+import pickle
 import matplotlib.pyplot as plt
 import numpy as np
-import pickle
-from collections import deque
-
 
 class Mapping:
     FREE_SPACE = 0

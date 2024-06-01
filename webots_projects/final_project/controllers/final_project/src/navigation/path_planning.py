@@ -15,7 +15,7 @@ class PathPlanning:
         """
         self.robot = robot
 
-    def find_shortest_path(self, start, goal):
+    def find_shortest_path(self, start, goal, neighbor_type='8-way'):
         """
         Find the shortest path from start to goal using Dijkstra's algorithm.
 
@@ -27,7 +27,7 @@ class PathPlanning:
         - path: list of tuples representing the path from start to goal
         """
         print("Finding shortest path using Dijkstra's algorithm")
-        return dijkstra(self.robot.mapping.map_data, start, goal)
+        return dijkstra(self.robot.mapping, start, goal, neighbor_type)
 
     def move_along_path(self, path, current_orientation='N'):
         """
@@ -37,6 +37,7 @@ class PathPlanning:
         - path: list of tuples representing the path from start to goal
         """
         print("Moving along path")
+        print(f"Path: {path}")
         for i in range(1, len(path)):
             dx = path[i][0] - path[i-1][0]
             dy = path[i][1] - path[i-1][1]
@@ -123,7 +124,7 @@ class PathPlanning:
         else:
             print(f"Invalid orientation transition from {current_orientation} to {target_orientation}")
 
-    def execute(self, start, goal, current_orientation):
+    def execute(self, start, goal, current_orientation, neighbor_type='8-way'):
         """
         Execute the path planning and move the robot to the goal.
 
@@ -131,8 +132,10 @@ class PathPlanning:
         - start: tuple (x, y) representing the starting position
         - goal: tuple (x, y) representing the goal position
         """
-        path = self.find_shortest_path(start, goal)
+        path = self.find_shortest_path(start, goal, neighbor_type)
+        print(f"Start: {start}, Goal: {goal}, Path: {path}")
         self.robot.mapping.update_path(path)
         self.robot.mapping.display_map()
+
         self.move_along_path(path, current_orientation)
 

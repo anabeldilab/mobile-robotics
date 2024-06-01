@@ -5,21 +5,21 @@ Universidade da Coruña
 Author: Anabel Díaz Labrador
         Jaime Pablo Pérez Moro
 
-Control del robot Khepera IV en Webots usando Supervisor.
+SLAM for the robot Khepera IV in Webots
 """
 
 from src.robot.khepera_supervisor import KheperaSupervisor
-from src.robot.khepera import Khepera
+from src.robot.khepera_odometry import KheperaOdometry
 
 
 def main():
     """
-    Función principal para controlar el robot.
+    Main function to run the Khepera robot.
     """
     #khepera_supervisor = KheperaSupervisor()
     #khepera_supervisor.run()
 
-    khepera = Khepera()
+    khepera = KheperaOdometry()
     khepera.run()
 
 
